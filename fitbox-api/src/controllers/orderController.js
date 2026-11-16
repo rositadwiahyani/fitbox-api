@@ -49,21 +49,26 @@ export const OrderController = {
             const problem = !b.device_id ? "device_id wajib diisi" : checkForm(b, days);
             if (problem) return res.status(400).json({ error: problem });
 
-            const pack = await PackageModel.getById(b.package_id).catch(() => null);
-            if (!pack) return res.status(404).json({ error: "Paket tidak ditemukan" });
+            let pack = null;
+            if (b.package_id) {
+                pack = await PackageModel.getById(b.package_id).catch(() => null);
+            }
+            const packageName = pack?.name || b.package_name || "Paket Menu Sehat";
+            const pricePerDay = pack?.price_per_day || Number(b.price_per_day) || 45000;
 
             const order = await OrderModel.create({
                 device_id: b.device_id,
-                package_id: pack.id,
-                package_name: pack.name,
-                price_per_day: pack.price_per_day,
+                package_id: pack?.id || b.package_id || 1,
+                package_name: packageName,
+                price_per_day: pricePerDay,
                 customer_name: b.customer_name,
                 phone: b.phone,
                 address: b.address,
                 duration_days: days,
                 start_date: b.start_date,
                 notes: b.notes || "",
-                total: pack.price_per_day * days,
+                payment_method: b.payment_method || "transfer_bank",
+                total: pricePerDay * days,
             });
             res.status(201).json(order);
         } catch (err) {

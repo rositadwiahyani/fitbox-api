@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+@theme {
+    --font-display: "Young Serif", Georgia, serif;
+    --font-sans: "Karla", system-ui, sans-serif;
+    --font-hand: "Kalam", "Comic Sans MS", cursive;
+    --color-leaf: #2f6b3a;
+    --color-leaf-dark: #22512b;
+    --color-paper: #eef3e6;
+    --color-flour: #f8fbf3;
+    --color-ink: #1c2a1f;
+    --color-sage: #cfe0b5;
+    --color-line: #cbd8bd;
+    --color-olive: #56642f;
+    --color-brick: #9b2c2c;
+}
+
+html,
+body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+}
+
+.hand {
+    font-family: var(--font-hand);
+}
+
+@layer components {
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        border-radius: 4px;
+        padding: .6rem 1.1rem;
+        font-weight: 700;
+        font-size: .95rem;
+        border: 1.5px solid var(--color-ink);
+        cursor: pointer;
+        transition: transform .1s, background .15s;
+    }
+
+    .btn:active {
+        transform: translateY(1px);
+    }
+
+    .btn:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .btn-primary {
+        background: var(--color-leaf);
+        border-color: var(--color-leaf);
+        color: #fff;
+        box-shadow: 3px 3px 0 var(--color-ink);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: var(--color-leaf-dark);
+        border-color: var(--color-leaf-dark);
+    }
+
+    .btn-primary:active {
+        box-shadow: 1px 1px 0 var(--color-ink);
+        transform: translate(2px, 2px);
+    }
+
+    .btn-ghost {
+        background: transparent;
+        color: var(--color-ink);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+        background: var(--color-flour);
+    }
+
+    .input {
+        width: 100%;
+        border: 1.5px solid var(--color-line);
+        background: var(--color-flour);
+        border-radius: 4px;
+        padding: .6rem .75rem;
+        outline: none;
+    }
+
+    .input:focus {
+        border-color: var(--color-leaf);
+    }
+
+    .label {
+        display: block;
+        margin-bottom: .3rem;
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .07em;
+        text-transform: uppercase;
+        color: color-mix(in srgb, var(--color-ink) 65%, transparent);
+    }
+
+    .price-tag {
+        display: inline-block;
+        background: var(--color-sage);
+        color: var(--color-ink);
+        padding: .2rem 1.1rem .2rem .7rem;
+        font-weight: 700;
+        font-size: .95rem;
+        clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.fade-up {
+    animation: fade-up .35s ease both;
+}
+
+@keyframes float-gentle {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+@keyframes float-gentle-reverse {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(6px);
+    }
+}
+
+.animate-float {
+    animation: float-gentle 4.2s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+    animation: float-gentle-reverse 4.8s ease-in-out infinite;
+}
+
+@keyframes pop-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.93) translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-pop-in {
+    animation: pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes progress-grow {
+    from {
+        width: 0%;
+    }
+}
+
+.animate-progress {
+    animation: progress-grow 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pulse-gentle {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.03);
+    }
+}
+
+.animate-pulse-gentle {
+    animation: pulse-gentle 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fade-up,
+    .animate-float,
+    .animate-float-reverse {
+        animation: none !important;
+    }
+}
