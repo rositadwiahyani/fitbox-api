@@ -79,8 +79,8 @@ export default function Calculator({ packages = [], onOpen }) {
                 f.goal === 'turun'
                     ? Math.max(1200, tdee - 500)
                     : f.goal === 'naik'
-                    ? tdee + 350
-                    : tdee
+                        ? tdee + 350
+                        : tdee
 
             // BMI Calculation
             const heightM = Number(f.height) / 100
@@ -173,26 +173,22 @@ export default function Calculator({ packages = [], onOpen }) {
                         <button
                             type="button"
                             onClick={() => updateField('gender', 'male')}
-                            className={`flex items-center justify-center gap-2.5 py-3 px-4 border-2 font-bold transition rounded-xs active:translate-y-0.5 ${
-                                f.gender === 'male'
+                            className={`flex items-center justify-center gap-2.5 py-3 px-4 border-2 font-bold transition rounded-xs active:translate-y-0.5 ${f.gender === 'male'
                                     ? 'border-ink bg-leaf text-paper shadow-[3px_3px_0_var(--color-ink)]'
                                     : 'border-line bg-paper text-ink/70 hover:border-ink hover:text-ink'
-                            }`}
+                                }`}
                         >
-                            <span className="text-xl">👨</span>
                             <span>Laki-laki</span>
                             {f.gender === 'male' && <Check size={16} className="ml-1 text-sage" />}
                         </button>
                         <button
                             type="button"
                             onClick={() => updateField('gender', 'female')}
-                            className={`flex items-center justify-center gap-2.5 py-3 px-4 border-2 font-bold transition rounded-xs active:translate-y-0.5 ${
-                                f.gender === 'female'
+                            className={`flex items-center justify-center gap-2.5 py-3 px-4 border-2 font-bold transition rounded-xs active:translate-y-0.5 ${f.gender === 'female'
                                     ? 'border-ink bg-leaf text-paper shadow-[3px_3px_0_var(--color-ink)]'
                                     : 'border-line bg-paper text-ink/70 hover:border-ink hover:text-ink'
-                            }`}
+                                }`}
                         >
-                            <span className="text-xl">👩</span>
                             <span>Perempuan</span>
                             {f.gender === 'female' && <Check size={16} className="ml-1 text-sage" />}
                         </button>
@@ -286,11 +282,10 @@ export default function Calculator({ packages = [], onOpen }) {
                                     key={item.id}
                                     type="button"
                                     onClick={() => updateField('goal', item.id)}
-                                    className={`flex flex-col text-left p-3.5 border-2 rounded-xs transition active:translate-y-0.5 ${
-                                        isSelected
+                                    className={`flex flex-col text-left p-3.5 border-2 rounded-xs transition active:translate-y-0.5 ${isSelected
                                             ? 'border-ink bg-sage shadow-[3px_3px_0_var(--color-ink)]'
                                             : 'border-line bg-paper hover:border-ink/60'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center justify-between w-full mb-1">
                                         <Icon size={18} className={isSelected ? 'text-leaf' : 'text-ink/60'} />
