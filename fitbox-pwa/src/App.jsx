@@ -37,7 +37,7 @@ export default function App() {
     const store = usePackages()
     const auth = useProfile()
     const { profile, saveProfile } = auth
-    const orderStore = useOrders(profile.deviceId)
+    const orderStore = useOrders(profile.deviceId, auth.user)
     const cartStore = useCartAndFavorites(notify)
     const online = useOnlineStatus()
     const { canInstall, install } = useInstallPrompt()
@@ -66,11 +66,16 @@ export default function App() {
                 notify('Pesanan diperbarui')
                 setOrderModal(null)
             } else {
-                const created = await orderStore.addOrder(data)
+                const created = await orderStore.addOrder({
+                    ...data,
+                    user_id: auth.user?.id || null,
+                })
                 saveProfile({ name: data.customer_name, phone: data.phone, address: data.address })
                 notify('Pesanan berhasil dibuat 🎉')
                 setOrderModal(null)
-                openOrder(created.id)
+                if (created?.id) {
+                    openOrder(created.id)
+                }
             }
         } catch (err) {
             notify(`Gagal: ${err.message}`)
@@ -131,7 +136,7 @@ export default function App() {
                 )}
                 {page === 'order' && (
                     <OrderDetail
-                        order={orderStore.orders.find((o) => o.id === orderId)}
+                        order={orderStore.orders.find((o) => String(o.id) === String(orderId))}
                         onBack={() => go('orders')}
                         onPay={orderStore.payOrder}
                         onDelete={orderStore.deleteOrder}

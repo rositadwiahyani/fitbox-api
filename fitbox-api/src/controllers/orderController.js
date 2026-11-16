@@ -35,7 +35,10 @@ const checkForm = (b, days) => {
 export const OrderController = {
     async getAll(req, res) {
         try {
-            if (!req.query.device_id) return res.status(400).json({ error: "device_id wajib diisi" });
+            if (req.query.user_id) {
+                return res.json(await OrderModel.getByUser(req.query.user_id));
+            }
+            if (!req.query.device_id) return res.status(400).json({ error: "device_id atau user_id wajib diisi" });
             res.json(await OrderModel.getByDevice(req.query.device_id));
         } catch (err) {
             res.status(500).json({ error: err.message });
@@ -58,6 +61,7 @@ export const OrderController = {
 
             const order = await OrderModel.create({
                 device_id: b.device_id,
+                user_id: b.user_id || null,
                 package_id: pack?.id || b.package_id || 1,
                 package_name: packageName,
                 price_per_day: pricePerDay,
@@ -68,7 +72,7 @@ export const OrderController = {
                 start_date: b.start_date,
                 notes: b.notes || "",
                 payment_method: b.payment_method || "transfer_bank",
-                total: pricePerDay * days,
+                total: b.total || pricePerDay * days,
             });
             res.status(201).json(order);
         } catch (err) {

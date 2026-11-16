@@ -100,6 +100,7 @@ export default function OrderForm({ pack, order, packages = [], profile, onSubmi
                 package_name: packageName,
                 price_per_day: totalBasePrice,
                 payment_method: paymentMethod,
+                total: grandTotal,
             })
             setSaving(false)
         }

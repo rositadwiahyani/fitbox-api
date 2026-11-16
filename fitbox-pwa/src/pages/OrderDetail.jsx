@@ -66,7 +66,7 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
                     <div>
                         <span className="hand text-xs text-leaf font-bold">rincian transaksi langganan</span>
-                        <h1 className="font-display text-2xl sm:text-3xl text-ink">Pesanan #{order.id.slice(-6)}</h1>
+                        <h1 className="font-display text-2xl sm:text-3xl text-ink">Pesanan #{String(order.id).slice(-6)}</h1>
                         <p className="text-xs text-ink/60 mt-0.5">
                             Dibuat pada: {order.created_at ? new Date(order.created_at).toLocaleDateString('id-ID', { dateStyle: 'long' }) : 'Hari ini'}
                         </p>

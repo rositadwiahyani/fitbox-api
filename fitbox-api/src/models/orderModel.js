@@ -10,6 +10,15 @@ export const OrderModel = {
         if (error) throw error;
         return data;
     },
+    async getByUser(userId) {
+        const { data, error } = await supabase
+            .from("orders")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data;
+    },
     async getById(id) {
         const { data, error } = await supabase.from("orders").select("*").eq("id", id).single();
         if (error) throw error;
