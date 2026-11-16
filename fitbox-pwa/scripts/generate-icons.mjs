@@ -5,6 +5,7 @@ const jobs = [
     ['public/icons/icon-192.png', 192],
     ['public/icons/icon-512.png', 512],
     ['public/icons/icon-maskable-512.png', 512],
+    ['public/favicon-32x32.png', 32],
 ]
 
 for (const [out, size] of jobs) {
