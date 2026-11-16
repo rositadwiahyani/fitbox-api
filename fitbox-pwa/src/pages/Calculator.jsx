@@ -174,8 +174,8 @@ export default function Calculator({ packages = [], onOpen }) {
                             type="button"
                             onClick={() => updateField('gender', 'male')}
                             className={`flex items-center justify-center gap-2.5 py-3 px-4 border-2 font-bold transition rounded-xs active:translate-y-0.5 ${f.gender === 'male'
-                                    ? 'border-ink bg-leaf text-paper shadow-[3px_3px_0_var(--color-ink)]'
-                                    : 'border-line bg-paper text-ink/70 hover:border-ink hover:text-ink'
+                                ? 'border-ink bg-leaf text-paper shadow-[3px_3px_0_var(--color-ink)]'
+                                : 'border-line bg-paper text-ink/70 hover:border-ink hover:text-ink'
                                 }`}
                         >
                             <span>Laki-laki</span>
@@ -185,8 +185,8 @@ export default function Calculator({ packages = [], onOpen }) {
                             type="button"
                             onClick={() => updateField('gender', 'female')}
                             className={`flex items-center justify-center gap-2.5 py-3 px-4 border-2 font-bold transition rounded-xs active:translate-y-0.5 ${f.gender === 'female'
-                                    ? 'border-ink bg-leaf text-paper shadow-[3px_3px_0_var(--color-ink)]'
-                                    : 'border-line bg-paper text-ink/70 hover:border-ink hover:text-ink'
+                                ? 'border-ink bg-leaf text-paper shadow-[3px_3px_0_var(--color-ink)]'
+                                : 'border-line bg-paper text-ink/70 hover:border-ink hover:text-ink'
                                 }`}
                         >
                             <span>Perempuan</span>
@@ -283,8 +283,8 @@ export default function Calculator({ packages = [], onOpen }) {
                                     type="button"
                                     onClick={() => updateField('goal', item.id)}
                                     className={`flex flex-col text-left p-3.5 border-2 rounded-xs transition active:translate-y-0.5 ${isSelected
-                                            ? 'border-ink bg-sage shadow-[3px_3px_0_var(--color-ink)]'
-                                            : 'border-line bg-paper hover:border-ink/60'
+                                        ? 'border-ink bg-sage shadow-[3px_3px_0_var(--color-ink)]'
+                                        : 'border-line bg-paper hover:border-ink/60'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between w-full mb-1">
@@ -444,8 +444,11 @@ export default function Calculator({ packages = [], onOpen }) {
 
                             <div className="flex flex-col sm:flex-row gap-3.5 items-center">
                                 <img
-                                    src={res.best.image_url}
+                                    src={res.best.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'}
                                     alt={res.best.name}
+                                    onError={(e) => {
+                                        e.currentTarget.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+                                    }}
                                     className="h-20 w-20 sm:h-24 sm:w-24 rounded object-cover border-2 border-ink shrink-0"
                                 />
                                 <div className="min-w-0 flex-1 text-center sm:text-left">

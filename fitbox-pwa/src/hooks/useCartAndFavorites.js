@@ -55,7 +55,7 @@ export function useCartAndFavorites(notify) {
     )
 
     const addToCart = useCallback(
-        (pack, duration_days = 7) => {
+        (pack, duration_days = 1) => {
             setCart((prev) => {
                 const existingIndex = prev.findIndex((item) => item.package.id === pack.id)
                 if (existingIndex > -1) {
@@ -63,12 +63,26 @@ export function useCartAndFavorites(notify) {
                     copy[existingIndex].quantity = (copy[existingIndex].quantity || 1) + 1
                     return copy
                 }
-                return [...prev, { id: `${pack.id}-${Date.now()}`, package: pack, duration_days, quantity: 1, addedAt: new Date().toISOString() }]
+                return [...prev, { id: `${pack.id}-${Date.now()}`, package: pack, duration_days: 1, quantity: 1, addedAt: new Date().toISOString() }]
             })
             if (notify) notify(`"${pack.name}" berhasil masuk ke keranjang 🛒`)
         },
         [notify],
     )
+
+    const updateQuantity = useCallback((cartItemId, delta) => {
+        setCart((prev) => {
+            return prev
+                .map((item) => {
+                    if (item.id === cartItemId) {
+                        const newQty = (item.quantity || 1) + delta
+                        return newQty > 0 ? { ...item, quantity: newQty } : null
+                    }
+                    return item
+                })
+                .filter(Boolean)
+        })
+    }, [])
 
     const removeFromCart = useCallback(
         (packId) => {
@@ -86,6 +100,7 @@ export function useCartAndFavorites(notify) {
         cart,
         cartCount: cart.reduce((acc, curr) => acc + (curr.quantity || 1), 0),
         addToCart,
+        updateQuantity,
         removeFromCart,
         clearCart,
         favorites,

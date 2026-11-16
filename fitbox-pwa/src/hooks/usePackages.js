@@ -9,7 +9,9 @@ function loadLocal() {
     try {
         const cached = JSON.parse(localStorage.getItem(STORAGE_KEY))
         if (Array.isArray(cached) && cached.length >= INITIAL_PACKAGES.length) {
-            return cached
+            // Pastikan tidak ada data usang yang kehilangan image_url
+            const valid = cached.every((p) => p.image_url && p.image_url.trim() !== '')
+            if (valid) return cached
         }
         return INITIAL_PACKAGES
     } catch {
@@ -34,7 +36,8 @@ export function usePackages() {
                     return {
                         ...fallback,
                         ...item,
-                        image_url: item.image_url || fallback.image_url,
+                        image_url: (item.image_url && item.image_url.trim() !== '') ? item.image_url : fallback.image_url,
+                        price_per_day: Number(item.price_per_day) || fallback.price_per_day,
                         description: item.description || fallback.description,
                         highlights: fallback.highlights,
                         carbs: item.carbs || fallback.carbs,

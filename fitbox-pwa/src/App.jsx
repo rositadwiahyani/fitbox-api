@@ -167,9 +167,10 @@ export default function App() {
                     cart={cartStore.cart}
                     onRemove={cartStore.removeFromCart}
                     onClear={cartStore.clearCart}
-                    onCheckout={(pack) => {
+                    onUpdateQuantity={cartStore.updateQuantity}
+                    onCheckout={(pack, selectedItems) => {
                         setShowCart(false)
-                        setOrderModal({ pack })
+                        setOrderModal({ pack, selectedItems })
                     }}
                     onClose={() => setShowCart(false)}
                 />
@@ -180,6 +181,7 @@ export default function App() {
                 <OrderForm
                     pack={orderModal.pack}
                     order={orderModal.order}
+                    selectedItems={orderModal.selectedItems}
                     packages={store.packages}
                     profile={profile}
                     onSubmit={submitOrder}

@@ -3,6 +3,8 @@ import { ArrowLeft, ShoppingBag, Heart, Flame, ShieldCheck, Sparkles, Utensils, 
 import { GOALS } from '../data/seed'
 import { rupiah } from '../utils'
 
+const DEFAULT_FOOD_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+
 export default function PackageDetail({
     pack,
     onBack,
@@ -12,6 +14,15 @@ export default function PackageDetail({
     isFavorite = false,
 }) {
     const [imgError, setImgError] = useState(false)
+    const imageUrl = pack?.image_url || DEFAULT_FOOD_IMAGE
+
+    const handleImgError = (e) => {
+        if (e.currentTarget.src !== DEFAULT_FOOD_IMAGE) {
+            e.currentTarget.src = DEFAULT_FOOD_IMAGE
+        } else {
+            setImgError(true)
+        }
+    }
 
     if (!pack) {
         return (
@@ -50,16 +61,17 @@ export default function PackageDetail({
                         className="relative aspect-[4/3] w-full overflow-hidden border-2 border-ink bg-sage shadow-[6px_6px_0_var(--color-ink)]"
                         style={{ borderRadius: 4 }}
                     >
-                        {pack.image_url && !imgError ? (
+                        {!imgError ? (
                             <img
-                                src={pack.image_url}
+                                src={imageUrl}
                                 alt={pack.name}
-                                onError={() => setImgError(true)}
+                                onError={handleImgError}
                                 className="h-full w-full object-cover"
                             />
                         ) : (
-                            <div className="flex h-full w-full items-center justify-center text-8xl">
-                                {pack.emoji || '🥗'}
+                            <div className="flex h-full w-full flex-col items-center justify-center bg-sage p-4 text-center">
+                                <span className="text-6xl mb-2">{pack.emoji || '🥗'}</span>
+                                <span className="text-sm font-bold text-ink/75 font-display">{pack.name}</span>
                             </div>
                         )}
 
@@ -176,10 +188,10 @@ export default function PackageDetail({
                 </div>
             </section>
 
-            {/* Bagian Contoh Menu Harian */}
+            {/* Bagian Jadwal Menu Harian */}
             <section>
                 <div className="mb-4 border-b border-line pb-2 flex items-baseline justify-between">
-                    <h2 className="text-2xl font-display">Contoh Jadwal Menu Harian</h2>
+                    <h2 className="text-2xl font-display">Jadwal Menu Harian</h2>
                     <span className="hand text-sm text-leaf">variasi menu setiap hari</span>
                 </div>
                 {meals.length ? (

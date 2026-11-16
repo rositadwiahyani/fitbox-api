@@ -3,6 +3,8 @@ import { Heart, ShoppingBag, Flame } from 'lucide-react'
 import { GOALS } from '../data/seed'
 import { rupiah } from '../utils'
 
+const DEFAULT_FOOD_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+
 export default function PackageCard({
     pack,
     index = 0,
@@ -12,6 +14,15 @@ export default function PackageCard({
     isFavorite = false,
 }) {
     const [imgError, setImgError] = useState(false)
+    const imageUrl = pack.image_url || DEFAULT_FOOD_IMAGE
+
+    const handleImgError = (e) => {
+        if (e.currentTarget.src !== DEFAULT_FOOD_IMAGE) {
+            e.currentTarget.src = DEFAULT_FOOD_IMAGE
+        } else {
+            setImgError(true)
+        }
+    }
 
     return (
         <article
@@ -25,17 +36,18 @@ export default function PackageCard({
                     className="relative flex aspect-[4/3] w-full cursor-pointer items-center justify-center overflow-hidden border-2 border-ink bg-sage/50"
                     style={{ borderRadius: 3 }}
                 >
-                    {pack.image_url && !imgError ? (
+                    {!imgError ? (
                         <img
-                            src={pack.image_url}
+                            src={imageUrl}
                             alt={pack.name}
-                            onError={() => setImgError(true)}
+                            onError={handleImgError}
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                         />
                     ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-sage text-6xl">
-                            {pack.emoji || '🥗'}
+                        <div className="flex h-full w-full flex-col items-center justify-center bg-sage p-4 text-center">
+                            <span className="text-4xl mb-1">{pack.emoji || '🥗'}</span>
+                            <span className="text-xs font-bold text-ink/75 font-display">{pack.name}</span>
                         </div>
                     )}
 
