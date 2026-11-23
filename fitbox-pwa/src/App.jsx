@@ -58,8 +58,19 @@ export default function App() {
         go('order')
     }
 
+    // Helper untuk memastikan koneksi internet tersedia sebelum memesan
+    const checkOnlineForOrder = (actionLabel = 'melakukan pemesanan') => {
+        if (!online || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+            alert(`Tidak dapat ${actionLabel} saat offline. Pastikan perangkat Anda tersambung ke internet.`)
+            notify(`Tidak dapat ${actionLabel} saat offline. Harus tersambung ke internet.`)
+            return false
+        }
+        return true
+    }
+
     // CREATE atau UPDATE pesanan dari modal
     const submitOrder = async (data) => {
+        if (!checkOnlineForOrder('mengirim pesanan')) return
         try {
             if (orderModal.order) {
                 await orderStore.updateOrder(orderModal.order.id, data)
@@ -117,7 +128,10 @@ export default function App() {
                     <PackageDetail
                         pack={currentPackage}
                         onBack={() => go(from)}
-                        onOrder={(pack) => setOrderModal({ pack })}
+                        onOrder={(pack) => {
+                            if (!checkOnlineForOrder('melakukan pemesanan')) return
+                            setOrderModal({ pack })
+                        }}
                         onAddToCart={cartStore.addToCart}
                         onToggleFavorite={cartStore.toggleFavorite}
                         isFavorite={currentPackage ? cartStore.isFavorite(currentPackage.id) : false}
@@ -129,7 +143,10 @@ export default function App() {
                         {...orderStore}
                         packages={store.packages}
                         onOpen={openOrder}
-                        onNewOrder={() => setOrderModal({ pack: store.packages[0] || null })}
+                        onNewOrder={() => {
+                            if (!checkOnlineForOrder('membuat pesanan baru')) return
+                            setOrderModal({ pack: store.packages[0] || null })
+                        }}
                         onNavigate={go}
                         isLoggedIn={auth.isLoggedIn}
                     />
@@ -174,6 +191,7 @@ export default function App() {
                     onClear={cartStore.clearCart}
                     onUpdateQuantity={cartStore.updateQuantity}
                     onCheckout={(pack, selectedItems) => {
+                        if (!checkOnlineForOrder('checkout keranjang')) return
                         setShowCart(false)
                         setOrderModal({ pack, selectedItems })
                     }}

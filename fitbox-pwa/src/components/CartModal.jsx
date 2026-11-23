@@ -62,6 +62,10 @@ export default function CartModal({
     }, 0)
 
     const handleCheckout = () => {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            alert('Tidak dapat checkout keranjang saat offline. Pastikan perangkat Anda tersambung ke internet.')
+            return
+        }
         if (selectedItems.length === 0) return
         // Kirim paket pertama yang dipilih dan seluruh array paket terpilih
         onCheckout(selectedItems[0].package, selectedItems)

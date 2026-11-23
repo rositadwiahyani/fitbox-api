@@ -88,6 +88,10 @@ export default function OrderForm({ pack, order, packages = [], profile, onSubmi
 
         const submit = async (e) => {
             e.preventDefault()
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                alert('Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.')
+                return
+            }
             if (!order && selectedPacks.length === 0) return
             setSaving(true)
             const packageName = order

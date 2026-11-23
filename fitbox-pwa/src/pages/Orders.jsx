@@ -33,6 +33,14 @@ export default function Orders({ orders, loading, error, refetch, onOpen, onNewO
         )
     }
 
+    const handleNewOrder = () => {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            alert('Tidak dapat membuat pesanan baru saat offline. Pastikan perangkat Anda tersambung ke internet.')
+            return
+        }
+        onNewOrder?.()
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
@@ -41,7 +49,7 @@ export default function Orders({ orders, loading, error, refetch, onOpen, onNewO
                     <h1 className="text-4xl">Pesanan Saya</h1>
                 </div>
                 <button
-                    onClick={() => onNewOrder?.()}
+                    onClick={handleNewOrder}
                     className="btn btn-primary shadow-[2.5px_2.5px_0_var(--color-ink)]"
                 >
                     <Plus size={18} /> Buat Pesanan Baru
@@ -66,7 +74,7 @@ export default function Orders({ orders, loading, error, refetch, onOpen, onNewO
                         Mulai langganan catering sehat harianmu sekarang. Pilih menu favoritmu dengan takaran kalori pas!
                     </p>
                     <div className="mt-5 flex justify-center gap-3">
-                        <button onClick={() => onNewOrder?.()} className="btn btn-primary">
+                        <button onClick={handleNewOrder} className="btn btn-primary">
                             <Plus size={18} /> Buat Pesanan Sekarang
                         </button>
                         <button onClick={() => onNavigate('packages')} className="btn btn-ghost">

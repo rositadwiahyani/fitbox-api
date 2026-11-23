@@ -163,7 +163,13 @@ export default function PackageDetail({
                         {onOrder && (
                             <button
                                 type="button"
-                                onClick={() => onOrder(pack)}
+                                onClick={() => {
+                                    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                                        alert('Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.')
+                                        return
+                                    }
+                                    onOrder(pack)
+                                }}
                                 className="btn border-1.5 border-ink bg-sage px-5 py-2.5 text-base text-ink font-bold shadow-[2px_2px_0_var(--color-ink)] hover:bg-sage/80"
                             >
                                 Pesan Langganan
