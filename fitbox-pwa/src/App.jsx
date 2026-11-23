@@ -5,6 +5,7 @@ import StatusBar from './components/StatusBar'
 import Footer from './components/Footer'
 import OrderForm from './components/OrderForm'
 import CartModal from './components/CartModal'
+import OfflineAlertModal from './components/OfflineAlertModal'
 import Home from './pages/Home'
 import Packages from './pages/Packages'
 import PackageDetail from './pages/PackageDetail'
@@ -27,6 +28,7 @@ export default function App() {
     const [orderId, setOrderId] = useState(null)
     const [orderModal, setOrderModal] = useState(null) // { pack } untuk baru, { order } untuk ubah
     const [showCart, setShowCart] = useState(false)
+    const [offlineAlert, setOfflineAlert] = useState(null)
     const [toast, setToast] = useState('')
 
     const notify = (msg) => {
@@ -58,11 +60,30 @@ export default function App() {
         go('order')
     }
 
+    // Pemicu alert offline yang kompatibel 100% untuk PWA mobile terpasang & website browser
+    const triggerOfflineAlert = (customMsg) => {
+        const msg = customMsg || 'Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.'
+        setOfflineAlert(msg)
+        try {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                navigator.vibrate([100, 50, 100])
+            }
+        } catch {}
+        try {
+            window.alert(msg)
+        } catch {}
+    }
+
+    const isAppOnline = () => {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return false
+        if (!online) return false
+        return true
+    }
+
     // Helper untuk memastikan koneksi internet tersedia sebelum memesan
     const checkOnlineForOrder = (actionLabel = 'melakukan pemesanan') => {
-        if (!online || (typeof navigator !== 'undefined' && !navigator.onLine)) {
-            alert(`Tidak dapat ${actionLabel} saat offline. Pastikan perangkat Anda tersambung ke internet.`)
-            notify(`Tidak dapat ${actionLabel} saat offline. Harus tersambung ke internet.`)
+        if (!isAppOnline()) {
+            triggerOfflineAlert(`Tidak dapat ${actionLabel} saat offline. Pastikan perangkat Anda tersambung ke internet.`)
             return false
         }
         return true
@@ -135,6 +156,7 @@ export default function App() {
                         onAddToCart={cartStore.addToCart}
                         onToggleFavorite={cartStore.toggleFavorite}
                         isFavorite={currentPackage ? cartStore.isFavorite(currentPackage.id) : false}
+                        onOfflineAlert={triggerOfflineAlert}
                     />
                 )}
                 {page === 'calc' && <Calculator packages={store.packages} onOpen={openPackage} />}
@@ -149,6 +171,7 @@ export default function App() {
                         }}
                         onNavigate={go}
                         isLoggedIn={auth.isLoggedIn}
+                        onOfflineAlert={triggerOfflineAlert}
                     />
                 )}
                 {page === 'order' && (
@@ -196,6 +219,7 @@ export default function App() {
                         setOrderModal({ pack, selectedItems })
                     }}
                     onClose={() => setShowCart(false)}
+                    onOfflineAlert={triggerOfflineAlert}
                 />
             )}
 
@@ -209,8 +233,15 @@ export default function App() {
                     profile={profile}
                     onSubmit={submitOrder}
                     onClose={() => setOrderModal(null)}
+                    onOfflineAlert={triggerOfflineAlert}
                 />
             )}
+
+            {/* Modal Alert Khusus Offline (Kompatibel 100% untuk PWA Mobile & Web) */}
+            <OfflineAlertModal
+                message={offlineAlert}
+                onClose={() => setOfflineAlert(null)}
+            />
 
             {toast && (
                 <div

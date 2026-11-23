@@ -7,7 +7,7 @@ const DEFAULT_FOOD_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a
 
 // pack = paket awal, order = pesanan yang sedang diubah, packages = daftar seluruh menu paket
 // selectedItems = daftar menu dari keranjang (opsional)
-export default function OrderForm({ pack, order, packages = [], profile, onSubmit, onClose, selectedItems = [] }) {
+export default function OrderForm({ pack, order, packages = [], profile, onSubmit, onClose, selectedItems = [], onOfflineAlert }) {
 
         // Inisialisasi selectedPacks dari keranjang atau dari paket tunggal
         const [selectedPacks, setSelectedPacks] = useState(() => {
@@ -88,8 +88,10 @@ export default function OrderForm({ pack, order, packages = [], profile, onSubmi
 
         const submit = async (e) => {
             e.preventDefault()
-            if (typeof navigator !== 'undefined' && !navigator.onLine) {
-                alert('Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.')
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+                const msg = 'Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.'
+                if (onOfflineAlert) onOfflineAlert(msg)
+                else alert(msg)
                 return
             }
             if (!order && selectedPacks.length === 0) return

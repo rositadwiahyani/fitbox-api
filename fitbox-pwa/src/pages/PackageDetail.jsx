@@ -12,6 +12,7 @@ export default function PackageDetail({
     onAddToCart,
     onToggleFavorite,
     isFavorite = false,
+    onOfflineAlert,
 }) {
     const [imgError, setImgError] = useState(false)
     const imageUrl = pack?.image_url || DEFAULT_FOOD_IMAGE
@@ -164,8 +165,10 @@ export default function PackageDetail({
                             <button
                                 type="button"
                                 onClick={() => {
-                                    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-                                        alert('Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.')
+                                    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+                                        const msg = 'Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.'
+                                        if (onOfflineAlert) onOfflineAlert(msg)
+                                        else alert(msg)
                                         return
                                     }
                                     onOrder(pack)

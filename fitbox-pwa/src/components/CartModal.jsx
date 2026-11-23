@@ -11,6 +11,7 @@ export default function CartModal({
     onCheckout,
     onClose,
     onUpdateQuantity,
+    onOfflineAlert,
 }) {
     // Set ID item yang dicentang / dipilih untuk dipesan
     const [selectedIds, setSelectedIds] = useState(() => new Set(cart.map((item) => item.id)))
@@ -62,8 +63,10 @@ export default function CartModal({
     }, 0)
 
     const handleCheckout = () => {
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            alert('Tidak dapat checkout keranjang saat offline. Pastikan perangkat Anda tersambung ke internet.')
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            const msg = 'Tidak dapat checkout keranjang saat offline. Pastikan perangkat Anda tersambung ke internet.'
+            if (onOfflineAlert) onOfflineAlert(msg)
+            else alert(msg)
             return
         }
         if (selectedItems.length === 0) return

@@ -3,7 +3,7 @@ import { rupiah } from '../utils'
 
 export const statusClass = (s) => (s === 'menunggu' ? 'bg-amber-100 text-amber-800' : 'bg-sage text-ink')
 
-export default function Orders({ orders, loading, error, refetch, onOpen, onNewOrder, onNavigate, isLoggedIn }) {
+export default function Orders({ orders, loading, error, refetch, onOpen, onNewOrder, onNavigate, isLoggedIn, onOfflineAlert }) {
     // Jika belum login, tampilkan prompt login
     if (!isLoggedIn) {
         return (
@@ -34,8 +34,10 @@ export default function Orders({ orders, loading, error, refetch, onOpen, onNewO
     }
 
     const handleNewOrder = () => {
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            alert('Tidak dapat membuat pesanan baru saat offline. Pastikan perangkat Anda tersambung ke internet.')
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            const msg = 'Tidak dapat membuat pesanan baru saat offline. Pastikan perangkat Anda tersambung ke internet.'
+            if (onOfflineAlert) onOfflineAlert(msg)
+            else alert(msg)
             return
         }
         onNewOrder?.()
