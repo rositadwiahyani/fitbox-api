@@ -221,18 +221,16 @@ export default function Profile({
                     <button
                         type="button"
                         onClick={() => setTab('login')}
-                        className={`flex items-center justify-center gap-1.5 py-2 text-sm font-bold transition rounded-xs ${
-                            tab === 'login' ? 'bg-leaf text-white shadow-xs' : 'text-ink/65 hover:text-ink'
-                        }`}
+                        className={`flex items-center justify-center gap-1.5 py-2 text-sm font-bold transition rounded-xs ${tab === 'login' ? 'bg-leaf text-white shadow-xs' : 'text-ink/65 hover:text-ink'
+                            }`}
                     >
                         <LogIn size={16} /> Masuk (Login)
                     </button>
                     <button
                         type="button"
                         onClick={() => setTab('register')}
-                        className={`flex items-center justify-center gap-1.5 py-2 text-sm font-bold transition rounded-xs ${
-                            tab === 'register' ? 'bg-leaf text-white shadow-xs' : 'text-ink/65 hover:text-ink'
-                        }`}
+                        className={`flex items-center justify-center gap-1.5 py-2 text-sm font-bold transition rounded-xs ${tab === 'register' ? 'bg-leaf text-white shadow-xs' : 'text-ink/65 hover:text-ink'
+                            }`}
                     >
                         <UserPlus size={16} /> Daftar Akun
                     </button>
@@ -477,12 +475,13 @@ export default function Profile({
             {/* Menu Favorit Saya di Profil */}
             {favoritesSection}
 
-            {/* Tentang FitBox & Info Keamanan */}
+            {/* Tentang FitBox*/}
             <section className="border-2 border-dashed border-line p-5 rounded-xs space-y-3">
-                <h2 className="text-xl font-display">Informasi Akun & Keamanan</h2>
+                <h2 className="text-xl font-display">Tentang Aplikasi</h2>
                 <p className="text-sm text-ink/80 leading-relaxed">
-                    Setiap pesanan yang Anda buat secara otomatis tertaut dengan akun email{' '}
-                    <strong className="text-ink">{user.email}</strong>. Riwayat pesanan dan status langganan dapat dipantau di halaman Pesanan.
+                    FitBox adalah aplikasi pemesanan catering diet dan makanan sehat. Pengguna dapat menghitung
+                    kebutuhan kalori harian, memilih paket menu sesuai tujuan, lalu berlangganan sesuai durasi
+                    yang diinginkan.
                 </p>
             </section>
         </div>

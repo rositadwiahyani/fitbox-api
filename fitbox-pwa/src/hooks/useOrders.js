@@ -12,28 +12,28 @@ function loadLocalOrders() {
     }
 }
 
-export function useOrders(deviceId, user) {
-    const [orders, setOrders] = useState(loadLocalOrders)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+    export function useOrders(deviceId, user) {
+        const [orders, setOrders] = useState(loadLocalOrders)
+        const [loading, setLoading] = useState(false)
+        const [error, setError] = useState(null)
 
-    const userId = user?.id || null
+        const userId = user?.id || null
 
-    const refetch = useCallback(async () => {
-        setLoading(true)
-        setError(null)
-        try {
-            const remote = await orderService.getOrders(deviceId, userId)
-            if (Array.isArray(remote)) {
-                setOrders(remote)
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
-            }
-        } catch (err) {
-            console.warn('Gagal memuat pesanan dari server/Supabase:', err?.message)
-            // Tetap gunakan data cache lokal
-        } finally {
-            setLoading(false)
-        }
+        const refetch = useCallback(async () => {
+            setLoading(true)
+            setError(null)
+            try {
+                    const remote = await orderService.getOrders(deviceId, userId)
+                    if (Array.isArray(remote)) {
+                        setOrders(remote)
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
+                    }
+                } catch (err) {
+                    console.warn('Gagal memuat pesanan dari server/Supabase:', err?.message)
+                    // Tetap gunakan data cache lokal
+                } finally {
+                    setLoading(false)
+                }
     }, [deviceId, userId])
 
     useEffect(() => {
@@ -105,47 +105,47 @@ export function useOrders(deviceId, user) {
             })
 
             try {
-                await orderService.updateOrder(id, data, deviceId)
-            } catch (err) {
-                console.error('Gagal update pesanan di Supabase:', err)
-            }
-        },
-        [deviceId],
+            await orderService.updateOrder(id, data, deviceId)
+        } catch (err) {
+            console.error('Gagal update pesanan di Supabase:', err)
+        }
+},
+[deviceId],
     )
 
-    const payOrder = useCallback(
-        async (id) => {
-            setOrders((prev) => {
-                const updatedList = prev.map((o) => (String(o.id) === String(id) ? { ...o, status: 'dibayar' } : o))
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
-                return updatedList
-            })
+const payOrder = useCallback(
+    async (id) => {
+        setOrders((prev) => {
+            const updatedList = prev.map((o) => (String(o.id) === String(id) ? { ...o, status: 'dibayar' } : o))
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
+            return updatedList
+        })
 
-            try {
-                await orderService.payOrder(id, deviceId)
-            } catch (err) {
-                console.error('Gagal verifikasi bayar di Supabase:', err)
-            }
+        try {
+            await orderService.payOrder(id, deviceId)
+    } catch (err) {
+        console.error('Gagal verifikasi bayar di Supabase:', err)
+    }
         },
-        [deviceId],
+[deviceId],
     )
 
-    const deleteOrder = useCallback(
-        async (id) => {
-            setOrders((prev) => {
-                const updatedList = prev.filter((o) => String(o.id) !== String(id))
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
-                return updatedList
-            })
+const deleteOrder = useCallback(
+    async (id) => {
+        setOrders((prev) => {
+            const updatedList = prev.filter((o) => String(o.id) !== String(id))
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
+            return updatedList
+        })
 
-            try {
-                await orderService.deleteOrder(id, deviceId)
-            } catch (err) {
-                console.error('Gagal hapus pesanan di Supabase:', err)
-            }
+        try {
+            await orderService.deleteOrder(id, deviceId)
+    } catch (err) {
+        console.error('Gagal hapus pesanan di Supabase:', err)
+    }
         },
-        [deviceId],
+[deviceId],
     )
 
-    return { orders, loading, error, refetch, addOrder, updateOrder, payOrder, deleteOrder }
+return { orders, loading, error, refetch, addOrder, updateOrder, payOrder, deleteOrder }
 }

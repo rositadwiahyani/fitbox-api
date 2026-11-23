@@ -279,7 +279,7 @@ export function useProfile() {
     const logout = useCallback(async () => {
         try {
             await supabase.auth.signOut()
-        } catch {}
+        } catch { }
         setUser(null)
         localStorage.removeItem(USER_KEY)
     }, [])
