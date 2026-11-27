@@ -10,14 +10,15 @@ const orderService = {
         return apiClient.get('/orders', { params })
     },
 
-    // Simpan pesanan baru melalui API Express
+    // Simpan pesanan baru melalui API Express (harga & total dihitung di backend)
     createOrder: (orderData) => {
         const payload = {
-            package_id: (Number.isInteger(Number(orderData.package_id)) && Number(orderData.package_id) > 0)
-                ? Number(orderData.package_id)
-                : 1,
-            package_name: orderData.package_name || 'Paket Menu Sehat FitBox',
-            price_per_day: Number(orderData.price_per_day) || 45000,
+            items: Array.isArray(orderData.items)
+                ? orderData.items.map((item) => ({
+                    package_id: item.package_id,
+                    qty: Number(item.qty),
+                }))
+                : [],
             customer_name: orderData.customer_name,
             phone: orderData.phone,
             address: orderData.address,
@@ -25,8 +26,6 @@ const orderService = {
             start_date: orderData.start_date,
             notes: orderData.notes || '',
             payment_method: orderData.payment_method || 'transfer_bank',
-            status: orderData.status || 'menunggu',
-            total: Number(orderData.total) || (Number(orderData.price_per_day) * Number(orderData.duration_days)),
             device_id: orderData.device_id || null,
             user_id: orderData.user_id || null,
         }

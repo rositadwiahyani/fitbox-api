@@ -214,7 +214,7 @@ export default function CartModal({
                                         {/* Tombol Hapus */}
                                         <button
                                             type="button"
-                                            onClick={() => onRemove(item.package.id)}
+                                            onClick={() => onRemove(item.id)}
                                             className="text-ink/40 hover:text-brick p-1 transition"
                                             title="Hapus dari keranjang"
                                         >

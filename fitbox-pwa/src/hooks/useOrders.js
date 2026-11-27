@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import orderService from '../services/orderService'
 
 const STORAGE_KEY = 'fitbox:orders'
@@ -12,140 +12,140 @@ function loadLocalOrders() {
     }
 }
 
-    export function useOrders(deviceId, user) {
-        const [orders, setOrders] = useState(loadLocalOrders)
-        const [loading, setLoading] = useState(false)
-        const [error, setError] = useState(null)
+export function useOrders(deviceId, user) {
+    const [orders, setOrders] = useState(loadLocalOrders)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
+    const ordersRef = useRef(orders)
+    ordersRef.current = orders
 
-        const userId = user?.id || null
+    const userId = user?.id || null
 
-        const refetch = useCallback(async () => {
-            setLoading(true)
-            setError(null)
-            try {
-                    const remote = await orderService.getOrders(deviceId, userId)
-                    if (Array.isArray(remote)) {
-                        setOrders(remote)
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
-                    }
-                } catch (err) {
-                    console.warn('Gagal memuat pesanan dari server API:', err?.message)
-                    // Tetap gunakan data cache lokal
-                } finally {
-                    setLoading(false)
-                }
-    }, [deviceId, userId])
+    const saveOrders = useCallback((newList) => {
+        ordersRef.current = newList
+        setOrders(newList)
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(newList))
+        } catch {}
+    }, [])
+
+    const refetch = useCallback(async () => {
+        setLoading(true)
+        setError(null)
+        try {
+            const remote = await orderService.getOrders(deviceId, userId)
+            if (Array.isArray(remote)) {
+                saveOrders(remote)
+            }
+        } catch (err) {
+            console.warn('Gagal memuat pesanan dari server API:', err?.message)
+            // Tetap gunakan data cache lokal
+        } finally {
+            setLoading(false)
+        }
+    }, [deviceId, userId, saveOrders])
 
     useEffect(() => {
         refetch()
     }, [refetch])
 
-    const saveOrders = (newList) => {
-        setOrders(newList)
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(newList))
-        } catch { }
-    }
-
     const addOrder = useCallback(
         async (data) => {
             const tempOrderId = `ord-${Date.now().toString().slice(-6)}`
+            const items = Array.isArray(data.items) ? data.items : []
+            const pricePerDay = Number(data.price_per_day) || 0
+            const durationDays = Number(data.duration_days) || 1
             const newOrder = {
                 id: tempOrderId,
-                package_id: data.package_id || 1,
+                items,
+                package_id: data.package_id ?? items[0]?.package_id ?? null,
                 package_name: data.package_name || 'Paket Menu Sehat FitBox',
-                price_per_day: Number(data.price_per_day) || 45000,
+                price_per_day: pricePerDay,
                 customer_name: data.customer_name,
                 phone: data.phone,
                 address: data.address,
-                duration_days: Number(data.duration_days) || 1,
+                duration_days: durationDays,
                 start_date: data.start_date,
                 notes: data.notes || '',
                 payment_method: data.payment_method || 'transfer_bank',
                 status: 'menunggu',
-                total: Number(data.total) || ((Number(data.price_per_day) || 45000) * (Number(data.duration_days) || 1)),
+                total: Number(data.total) || pricePerDay * durationDays,
                 created_at: new Date().toISOString(),
                 device_id: deviceId,
                 user_id: userId || data.user_id || null,
             }
 
-            // Simpan langsung secara lokal terlebih dahulu
-            setOrders((prev) => {
-                const next = [newOrder, ...prev]
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-                return next
-            })
+            // Simpan sementara di state lokal sebelum panggilan API
+            saveOrders([newOrder, ...ordersRef.current])
 
-            // Kirim ke server API Express via orderService
             try {
                 const remote = await orderService.createOrder(newOrder)
                 if (remote && remote.id) {
-                    setOrders((prev) => {
-                        const merged = prev.map((o) => (o.id === tempOrderId ? remote : o))
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-                        return merged
-                    })
+                    saveOrders(ordersRef.current.map((o) => (o.id === tempOrderId ? remote : o)))
                     return remote
                 }
+                throw new Error('Respons pesanan dari server tidak valid')
             } catch (err) {
-                console.error('Gagal mengirim pesanan ke server API:', err)
+                // Hapus pesanan sementara jika API gagal, lalu lempar error
+                saveOrders(ordersRef.current.filter((o) => o.id !== tempOrderId))
+                throw err
             }
-
-            return newOrder
         },
-        [deviceId, userId],
+        [deviceId, userId, saveOrders],
     )
 
     const updateOrder = useCallback(
         async (id, data) => {
-            setOrders((prev) => {
-                const updatedList = prev.map((o) => (String(o.id) === String(id) ? { ...o, ...data } : o))
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
-                return updatedList
-            })
+            const previousOrders = ordersRef.current
+            saveOrders(previousOrders.map((o) => (String(o.id) === String(id) ? { ...o, ...data } : o)))
 
             try {
-            await orderService.updateOrder(id, data, deviceId)
-        } catch (err) {
-            console.error('Gagal update pesanan di server API:', err)
-        }
-},
-[deviceId],
-    )
-
-const payOrder = useCallback(
-    async (id) => {
-        setOrders((prev) => {
-            const updatedList = prev.map((o) => (String(o.id) === String(id) ? { ...o, status: 'dibayar' } : o))
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
-            return updatedList
-        })
-
-        try {
-            await orderService.payOrder(id, deviceId)
-    } catch (err) {
-        console.error('Gagal verifikasi bayar di server API:', err)
-    }
+                const remote = await orderService.updateOrder(id, data, deviceId)
+                if (remote && remote.id) {
+                    saveOrders(ordersRef.current.map((o) => (String(o.id) === String(id) ? remote : o)))
+                }
+                return remote
+            } catch (err) {
+                saveOrders(previousOrders)
+                throw err
+            }
         },
-[deviceId],
+        [deviceId, saveOrders],
     )
 
-const deleteOrder = useCallback(
-    async (id) => {
-        setOrders((prev) => {
-            const updatedList = prev.filter((o) => String(o.id) !== String(id))
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
-            return updatedList
-        })
+    const payOrder = useCallback(
+        async (id) => {
+            const previousOrders = ordersRef.current
+            saveOrders(previousOrders.map((o) => (String(o.id) === String(id) ? { ...o, status: 'dibayar' } : o)))
 
-        try {
-            await orderService.deleteOrder(id, deviceId)
-    } catch (err) {
-        console.error('Gagal hapus pesanan di server API:', err)
-    }
+            try {
+                const remote = await orderService.payOrder(id, deviceId)
+                if (remote && remote.id) {
+                    saveOrders(ordersRef.current.map((o) => (String(o.id) === String(id) ? remote : o)))
+                }
+                return remote
+            } catch (err) {
+                saveOrders(previousOrders)
+                throw err
+            }
         },
-[deviceId],
+        [deviceId, saveOrders],
     )
 
-return { orders, loading, error, refetch, addOrder, updateOrder, payOrder, deleteOrder }
+    const deleteOrder = useCallback(
+        async (id) => {
+            const previousOrders = ordersRef.current
+            saveOrders(previousOrders.filter((o) => String(o.id) !== String(id)))
+
+            try {
+                await orderService.deleteOrder(id, deviceId)
+            } catch (err) {
+                saveOrders(previousOrders)
+                throw err
+            }
+        },
+        [deviceId, saveOrders],
+    )
+
+    return { orders, loading, error, refetch, addOrder, updateOrder, payOrder, deleteOrder }
 }

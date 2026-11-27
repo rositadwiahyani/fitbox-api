@@ -122,7 +122,7 @@ fitbox/
 │   │   │   └── supabaseClient.js   # Inisialisasi client Supabase dengan kredensial env
 │   │   ├── controllers/
 │   │   │   ├── packageController.js # Logika CRUD paket menu makanan
-│   │   │   └── orderController.js   # Logika pemesanan, validasi H-1, update, & pembayaran
+│   │   │   └── orderController.js   # Logika pemesanan, kalkulasi harga, validasi H-1 WIB, & pembayaran
 │   │   ├── data/
 │   │   │   └── packagesData.js     # Data katalog awal 22 menu diet lengkap
 │   │   ├── models/
@@ -134,6 +134,7 @@ fitbox/
 │   │   └── index.js                # Entry point server Express & konfigurasi CORS
 │   ├── .env.example                # Template konfigurasi environment backend
 │   ├── package.json                # Dependencies & scripts backend
+│   ├── requests.http               # Contoh request REST API & kasus uji
 │   ├── seed_packages.js            # Skrip seeder otomatis untuk populasi database
 │   └── vercel.json                 # Konfigurasi deployment serverless ke Vercel
 │
@@ -150,6 +151,7 @@ fitbox/
 │   │   │   ├── PackageCard.jsx     # Kartu tampilan paket menu & nutrisi
 │   │   │   ├── CartModal.jsx       # Modal drawer keranjang belanja
 │   │   │   ├── OrderForm.jsx       # Modal formulir pemesanan langganan
+│   │   │   ├── ConfirmModal.jsx    # Modal konfirmasi pembatalan/hapus
 │   │   │   ├── OfflineAlertModal.jsx # Alert modal penanganan koneksi offline
 │   │   │   ├── SplashScreen.jsx    # Layar pembuka (splash screen) PWA
 │   │   │   ├── StatusBar.jsx       # Status bar notifikasi online/offline
@@ -157,6 +159,9 @@ fitbox/
 │   │   ├── config/
 │   │   │   ├── api.js              # Klien Axios & konfigurasi URL backend
 │   │   │   └── supabaseClient.js   # Klien Supabase Auth untuk frontend
+│   │   ├── data/
+│   │   │   ├── packagesData.js     # Data cadangan 22 paket menu sehat
+│   │   │   └── seed.js             # Konstanta tujuan, aktivitas, durasi, & status
 │   │   ├── hooks/                  # Custom React Hooks
 │   │   │   ├── usePackages.js      # Fetching data menu & caching lokal
 │   │   │   ├── useOrders.js        # Operasi CRUD pesanan pengguna
@@ -172,9 +177,12 @@ fitbox/
 │   │   │   ├── Orders.jsx          # Riwayat & status pesanan langganan
 │   │   │   ├── OrderDetail.jsx     # Detail spesifik pesanan & simulasi bayar
 │   │   │   └── Profile.jsx         # Akun pengguna, favorit, & autentikasi
+│   │   ├── services/               # Layanan komunikasi ke API Express
+│   │   │   ├── packageService.js   # Service CRUD paket via apiClient
+│   │   │   └── orderService.js     # Service CRUD pesanan via apiClient
 │   │   ├── App.jsx                 # Komponen root & routing state
 │   │   ├── main.jsx                # Entry point React
-│   │   └── utils.js                # Format rupiah, kalkulator TDEE, generator ID
+│   │   └── utils.js                # Format rupiah, kalkulator TDEE, tanggal WIB, ID
 │   ├── .env.example                # Template konfigurasi environment frontend
 │   ├── index.html                  # Dokumen HTML utama & meta tag PWA
 │   ├── package.json                # Dependencies & scripts frontend
@@ -351,21 +359,22 @@ Backend FitBox mengekspos endpoint RESTful API berbasis JSON dengan *base URL*: 
 | `DELETE`| `/api/orders/:id` | Membatalkan pesanan (status: `menunggu`) | `?device_id=...` |
 
 #### Contoh Payload `POST /api/orders`:
+Harga harian (`price_per_day`), nama gabungan (`package_name`), `total`, dan status awal (`menunggu`) dihitung otomatis di backend berdasarkan data paket di database.
 ```json
 {
   "device_id": "c1f7a83d-9214-4eb9-bf25-5460a169b188",
   "user_id": "optional-uuid-jika-login",
-  "package_id": 1,
-  "package_name": "Salmon Green Goddess Bowl",
-  "price_per_day": 48000,
+  "items": [
+    { "package_id": 1, "qty": 1 },
+    { "package_id": 2, "qty": 2 }
+  ],
   "customer_name": "Budi Santoso",
   "phone": "081234567890",
   "address": "Jl. Sudirman No. 45, Jakarta Selatan",
   "duration_days": 7,
   "start_date": "2026-11-29",
   "notes": "Tidak pakai daun ketumbar, pisahkan dressing.",
-  "payment_method": "transfer_bank",
-  "total": 336000
+  "payment_method": "transfer_bank"
 }
 ```
 

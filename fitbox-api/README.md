@@ -67,7 +67,26 @@ Server akan aktif secara default di `http://localhost:3000`.
 ### Pesanan (`/api/orders`)
 - `GET /api/orders?device_id=...` — Ambil riwayat pesanan berdasarkan perangkat
 - `GET /api/orders?user_id=...` — Ambil riwayat pesanan berdasarkan ID pengguna
-- `POST /api/orders` — Buat pesanan baru
-- `PUT /api/orders/:id` — Ubah data pesanan (status menunggu)
+- `POST /api/orders` — Buat pesanan baru (kirim `items: [{ package_id, qty }]`; harga harian, total, `package_name`, dan status `menunggu` dihitung di backend)
+- `PUT /api/orders/:id` — Ubah data pesanan (status `menunggu`, `total` dihitung ulang di backend)
 - `POST /api/orders/:id/pay` — Simulasi pembayaran pesanan
 - `DELETE /api/orders/:id` — Batalkan pesanan
+
+#### Contoh Payload `POST /api/orders`
+```json
+{
+  "device_id": "device-123",
+  "user_id": null,
+  "items": [
+    { "package_id": 1, "qty": 1 },
+    { "package_id": 2, "qty": 2 }
+  ],
+  "customer_name": "Budi Santoso",
+  "phone": "081234567890",
+  "address": "Jl. Sudirman No. 45, Jakarta",
+  "duration_days": 7,
+  "start_date": "2026-11-29",
+  "notes": "Tanpa sambal",
+  "payment_method": "transfer_bank"
+}
+```

@@ -1,0 +1,199 @@
+@baseUrl = http://localhost:3000
+@deviceId = test-device-001
+@otherDeviceId = test-device-999
+@tomorrowWIB = 2026-11-28
+
+### 1. Health Check
+GET {{baseUrl}}/
+
+### ============================================================================
+### PACKAGES (/api/packages)
+### ============================================================================
+
+### 2. Ambil Semua Paket
+GET {{baseUrl}}/api/packages
+
+### 3. Ambil Paket Berdasarkan ID
+GET {{baseUrl}}/api/packages/1
+
+### 4. Tambah Paket Baru
+POST {{baseUrl}}/api/packages
+Content-Type: application/json
+
+{
+  "name": "Paket Uji FitBox",
+  "goal": "turun",
+  "calories": 450,
+  "protein": 35,
+  "carbs": 40,
+  "fats": 12,
+  "fiber": 6,
+  "price_per_day": 42000,
+  "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+  "description": "Paket uji coba sementara.",
+  "menu_sample": "Siang: Dada ayam panggang & quinoa",
+  "highlights": ["Rendah Kalori", "Tinggi Protein"]
+}
+
+### 5. Perbarui Paket (ganti ID sesuai hasil POST)
+PUT {{baseUrl}}/api/packages/1
+Content-Type: application/json
+
+{
+  "name": "Salmon Green Goddess Bowl",
+  "goal": "turun",
+  "calories": 480,
+  "protein": 42,
+  "carbs": 38,
+  "fats": 14,
+  "fiber": 8,
+  "price_per_day": 48000,
+  "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+  "description": "Fillet salmon Norwegia segar.",
+  "menu_sample": "Siang: Salmon panggang lemon herb",
+  "highlights": ["Tinggi Asam Lemak Omega-3"]
+}
+
+### 6. Hapus Paket (ganti ID dengan paket uji)
+DELETE {{baseUrl}}/api/packages/999
+
+### ============================================================================
+### ORDERS (/api/orders)
+### ============================================================================
+
+### 7. Ambil Pesanan Berdasarkan device_id
+GET {{baseUrl}}/api/orders?device_id={{deviceId}}
+
+### 8. Ambil Pesanan Berdasarkan user_id
+GET {{baseUrl}}/api/orders?user_id=00000000-0000-0000-0000-000000000000
+
+### 9. Buat Pesanan 1 Paket (Sukses)
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}",
+  "items": [
+    { "package_id": 1, "qty": 1 }
+  ],
+  "customer_name": "Budi Santoso",
+  "phone": "081234567890",
+  "address": "Jl. Sudirman No. 45, Jakarta",
+  "duration_days": 3,
+  "start_date": "{{tomorrowWIB}}",
+  "notes": "Tanpa sambal",
+  "payment_method": "transfer_bank"
+}
+
+### 10. Buat Pesanan 3 Paket (Sukses)
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}",
+  "items": [
+    { "package_id": 1, "qty": 2 },
+    { "package_id": 2, "qty": 1 },
+    { "package_id": 3, "qty": 3 }
+  ],
+  "customer_name": "Siti Aminah",
+  "phone": "081298765432",
+  "address": "Jl. Gatot Subroto No. 12, Jakarta",
+  "duration_days": 7,
+  "start_date": "{{tomorrowWIB}}",
+  "notes": "Porsi ekstra sayur",
+  "payment_method": "qris"
+}
+
+### 11. Ubah Pesanan (ganti ID sesuai hasil POST, total dihitung ulang di backend)
+PUT {{baseUrl}}/api/orders/1
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}",
+  "customer_name": "Budi Santoso",
+  "phone": "081234567890",
+  "address": "Jl. Thamrin No. 10, Jakarta",
+  "duration_days": 7,
+  "start_date": "{{tomorrowWIB}}",
+  "notes": "Ubah durasi ke 7 hari"
+}
+
+### 12. Simulasi Bayar Pesanan (ganti ID sesuai hasil POST)
+POST {{baseUrl}}/api/orders/1/pay
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}"
+}
+
+### 13. Batalkan / Hapus Pesanan (hanya bisa jika status masih 'menunggu')
+DELETE {{baseUrl}}/api/orders/2?device_id={{deviceId}}
+
+### ============================================================================
+### KASUS GAGAL (VALIDASI & OTORISASI)
+### ============================================================================
+
+### 14. Gagal: Tanggal Mulai Lampau (400)
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}",
+  "items": [
+    { "package_id": 1, "qty": 1 }
+  ],
+  "customer_name": "Budi Santoso",
+  "phone": "081234567890",
+  "address": "Jl. Sudirman No. 45",
+  "duration_days": 3,
+  "start_date": "2020-01-01",
+  "payment_method": "transfer_bank"
+}
+
+### 15. Gagal: Qty Lebih dari 3 (400)
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}",
+  "items": [
+    { "package_id": 1, "qty": 4 }
+  ],
+  "customer_name": "Budi Santoso",
+  "phone": "081234567890",
+  "address": "Jl. Sudirman No. 45",
+  "duration_days": 3,
+  "start_date": "{{tomorrowWIB}}",
+  "payment_method": "transfer_bank"
+}
+
+### 16. Gagal: Paket Tidak Ada (400)
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}",
+  "items": [
+    { "package_id": 999999, "qty": 1 }
+  ],
+  "customer_name": "Budi Santoso",
+  "phone": "081234567890",
+  "address": "Jl. Sudirman No. 45",
+  "duration_days": 3,
+  "start_date": "{{tomorrowWIB}}",
+  "payment_method": "transfer_bank"
+}
+
+### 17. Gagal: Bukan Pemilik Pesanan (403)
+PUT {{baseUrl}}/api/orders/1
+Content-Type: application/json
+
+{
+  "device_id": "{{otherDeviceId}}",
+  "customer_name": "Bukan Pemilik",
+  "phone": "081200000000",
+  "address": "Alamat Palsu",
+  "duration_days": 5,
+  "start_date": "{{tomorrowWIB}}"
+}

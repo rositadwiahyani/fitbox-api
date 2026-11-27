@@ -33,7 +33,7 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
             setConfirmingCancel(false)
             onBack()
         } catch (err) {
-            if (notify) notify(`Gagal membatalkan: ${err.message}`)
+            if (notify) notify(`Gagal: ${err?.message || 'Tidak dapat membatalkan pesanan'}`)
         }
     }
 
@@ -42,12 +42,11 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
             await onPay(order.id)
             if (notify) notify('Pembayaran berhasil diverifikasi! 🎉')
         } catch (err) {
-            if (notify) notify(`Gagal konfirmasi bayar: ${err.message}`)
+            if (notify) notify(`Gagal: ${err?.message || 'Tidak dapat memverifikasi pembayaran'}`)
         }
     }
 
     const isPending = order.status === 'menunggu'
-    const isCancelled = order.status === 'dibatalkan'
 
     return (
         <div className="fade-up mx-auto max-w-2xl space-y-6">
@@ -165,9 +164,9 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
                     </div>
                 </div>
 
-                {/* Tombol Aksi: Bayar & Batalkan Pesanan */}
-                <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-4">
-                    {isPending && (
+                {/* Tombol Aksi: Bayar & Batalkan Pesanan (hanya saat status masih menunggu) */}
+                {isPending && (
+                    <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-4">
                         <button
                             type="button"
                             onClick={handlePay}
@@ -175,9 +174,7 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
                         >
                             <CheckCircle2 size={18} /> Konfirmasi Pembayaran (Simulasi)
                         </button>
-                    )}
 
-                    {!isCancelled && (
                         <button
                             type="button"
                             onClick={() => setConfirmingCancel(true)}
@@ -185,8 +182,8 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
                         >
                             <Trash2 size={16} /> Batalkan / Hapus Pesanan
                         </button>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Modal Konfirmasi Pembatalan */}

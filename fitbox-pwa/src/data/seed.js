@@ -13,4 +13,4 @@ export const ACTIVITY = [
 
 export const DURATIONS = [1, 3, 7, 14, 30]
 
-export const STEPS = ['menunggu', 'dibayar', 'diproses', 'diantar', 'selesai']
+export const STEPS = ['menunggu', 'dibayar', 'diproses', 'dikirim', 'selesai']

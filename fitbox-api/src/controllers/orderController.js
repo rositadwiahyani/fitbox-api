@@ -1,8 +1,15 @@
 import { OrderModel } from "../models/orderModel.js";
 import { PackageModel } from "../models/packageModel.js";
 
-// Tanggal minimal pesan = besok (H-1) menurut WIB: sekarang + 7 jam + 24 jam
-const minDate = () => new Date(Date.now() + 31 * 3600 * 1000).toISOString().slice(0, 10);
+const wibDateFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+});
+
+// Tanggal minimal pesan = besok (H-1) menurut zona waktu Asia/Jakarta (WIB)
+const getTomorrowWIB = () => wibDateFormatter.format(new Date(Date.now() + 24 * 60 * 60 * 1000));
 
 const deviceOf = (req) => req.query.device_id || req.body?.device_id;
 
@@ -28,7 +35,8 @@ const checkForm = (b, days) => {
     if (!b.customer_name || !b.phone || !b.address || !b.start_date)
         return "Nama, nomor HP, alamat, dan tanggal mulai wajib diisi";
     if (!Number.isInteger(days) || days < 1 || days > 30) return "Durasi harus 1-30 hari";
-    if (b.start_date < minDate()) return "Tanggal mulai minimal H-1 (besok)";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(b.start_date)) return "Format tanggal mulai tidak valid";
+    if (b.start_date < getTomorrowWIB()) return "Tanggal mulai minimal H-1 (besok)";
     return null;
 };
 
@@ -52,21 +60,56 @@ export const OrderController = {
             const problem = !b.device_id ? "device_id wajib diisi" : checkForm(b, days);
             if (problem) return res.status(400).json({ error: problem });
 
-            let pack = null;
-            if (b.package_id) {
-                pack = await PackageModel.getById(b.package_id).catch(() => null);
+            if (!Array.isArray(b.items) || b.items.length === 0) {
+                return res.status(400).json({ error: "Minimal pilih 1 paket menu" });
             }
-            const packageName = pack?.name || b.package_name || "Paket Menu Sehat";
-            const pricePerDay = pack?.price_per_day || Number(b.price_per_day) || 45000;
+            if (b.items.length > 3) {
+                return res.status(400).json({ error: "Maksimal 3 paket menu per pesanan" });
+            }
 
-            const safePackageId = Number.isInteger(Number(b.package_id)) && Number(b.package_id) > 0
-                ? Number(b.package_id)
-                : 1;
+            const parsedItems = [];
+            const seenIds = new Set();
+            for (const rawItem of b.items) {
+                const rawId = rawItem?.package_id;
+                const isValidNumber = typeof rawId === "number" && Number.isInteger(rawId) && rawId > 0;
+                const isValidString = typeof rawId === "string" && rawId.trim().length > 0;
+                if (!isValidNumber && !isValidString) {
+                    return res.status(400).json({ error: "package_id tidak valid" });
+                }
+                const packageId = isValidNumber ? rawId : rawId.trim();
+                const qty = Number(rawItem?.qty);
+                if (!Number.isInteger(qty) || qty < 1 || qty > 3) {
+                    return res.status(400).json({ error: "Jumlah (qty) tiap paket harus antara 1 sampai 3" });
+                }
+                const key = String(packageId);
+                if (seenIds.has(key)) {
+                    return res.status(400).json({ error: "Paket yang sama tidak boleh duplikat dalam satu pesanan" });
+                }
+                seenIds.add(key);
+                parsedItems.push({ package_id: packageId, qty });
+            }
 
-            const order = await OrderModel.create({
+            const resolvedItems = [];
+            for (const item of parsedItems) {
+                const pack = await PackageModel.getById(item.package_id).catch(() => null);
+                if (!pack || !(Number(pack.price_per_day) > 0)) {
+                    return res.status(400).json({ error: `Paket dengan ID ${item.package_id} tidak ditemukan` });
+                }
+                resolvedItems.push({ pack, qty: item.qty });
+            }
+
+            const pricePerDay = resolvedItems.reduce(
+                (sum, item) => sum + Number(item.pack.price_per_day) * item.qty,
+                0
+            );
+            const total = pricePerDay * days;
+            const packageName = resolvedItems.map((item) => `${item.pack.name}(×${item.qty})`).join(", ");
+            const firstPackageId = resolvedItems[0].pack.id;
+
+            const basePayload = {
                 device_id: b.device_id,
                 user_id: b.user_id || null,
-                package_id: safePackageId,
+                package_id: firstPackageId,
                 package_name: packageName,
                 price_per_day: pricePerDay,
                 customer_name: b.customer_name,
@@ -76,8 +119,22 @@ export const OrderController = {
                 start_date: b.start_date,
                 notes: b.notes || "",
                 payment_method: b.payment_method || "transfer_bank",
-                total: b.total || pricePerDay * days,
-            });
+                status: "menunggu",
+                total,
+            };
+
+            let order;
+            try {
+                order = await OrderModel.create(basePayload);
+            } catch (insertErr) {
+                // Jika tabel packages memakai UUID sementara kolom orders.package_id bertipe bigint
+                const msg = insertErr?.message || "";
+                if (insertErr?.code === "22P02" || msg.includes("invalid input syntax for type bigint")) {
+                    order = await OrderModel.create({ ...basePayload, package_id: null });
+                } else {
+                    throw insertErr;
+                }
+            }
             res.status(201).json(order);
         } catch (err) {
             res.status(400).json({ error: err.message });
@@ -102,7 +159,7 @@ export const OrderController = {
                     duration_days: days,
                     start_date: b.start_date,
                     notes: b.notes || "",
-                    total: order.price_per_day * days,
+                    total: Number(order.price_per_day) * days,
                 })
             );
         } catch (err) {

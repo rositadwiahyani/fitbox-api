@@ -68,13 +68,11 @@ export function usePackages() {
             }
         } catch (err) {
             setError(err.message) // Tetap tampilkan data lokal / initial
-            if (packages.length === 0) {
-                setPackages(byCalories(INITIAL_PACKAGES))
-            }
+            setPackages((prev) => (prev.length === 0 ? byCalories(INITIAL_PACKAGES) : prev))
         } finally {
             setLoading(false)
         }
-    }, [packages.length])
+    }, [])
 
     useEffect(() => {
         refetch()

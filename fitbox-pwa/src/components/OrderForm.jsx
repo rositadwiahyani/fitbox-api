@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Check, Copy, Building2, QrCode, Plus, Minus, ShoppingBag } from 'lucide-react'
 import { DURATIONS } from '../data/seed'
-import { rupiah } from '../utils'
+import { rupiah, getTomorrowWIB } from '../utils'
 
 const DEFAULT_FOOD_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=120&q=80'
 
@@ -48,7 +48,7 @@ export default function OrderForm({ pack, order, packages = [], profile, onSubmi
         }, [profile, order])
 
         const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
-        const tomorrow = new Date(Date.now() + 864e5).toLocaleDateString('en-CA')
+        const tomorrow = getTomorrowWIB()
 
         // Toggle pilih/lepas paket (maks 3)
         const togglePack = (p) => {
@@ -99,9 +99,16 @@ export default function OrderForm({ pack, order, packages = [], profile, onSubmi
             const packageName = order
                 ? order.package_name
                 : selectedPacks.map(sp => `${sp.pack.name}(×${sp.qty})`).join(', ')
+            const items = order
+                ? undefined
+                : selectedPacks.map(sp => ({
+                    package_id: sp.pack.id,
+                    qty: sp.qty,
+                }))
             await onSubmit({
                 ...f,
                 duration_days: Number(f.duration_days),
+                items,
                 package_id: order ? order.package_id : selectedPacks[0]?.pack?.id,
                 package_name: packageName,
                 price_per_day: totalBasePrice,

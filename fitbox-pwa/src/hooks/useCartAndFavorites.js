@@ -57,13 +57,24 @@ export function useCartAndFavorites(notify) {
     const addToCart = useCallback(
         (pack, duration_days = 1) => {
             setCart((prev) => {
-                const existingIndex = prev.findIndex((item) => item.package.id === pack.id)
-                if (existingIndex > -1) {
-                    const copy = [...prev]
-                    copy[existingIndex].quantity = (copy[existingIndex].quantity || 1) + 1
-                    return copy
+                const exists = prev.some((item) => item.package.id === pack.id)
+                if (exists) {
+                    return prev.map((item) =>
+                        item.package.id === pack.id
+                            ? { ...item, quantity: (item.quantity || 1) + 1 }
+                            : item,
+                    )
                 }
-                return [...prev, { id: `${pack.id}-${Date.now()}`, package: pack, duration_days: 1, quantity: 1, addedAt: new Date().toISOString() }]
+                return [
+                    ...prev,
+                    {
+                        id: `${pack.id}-${Date.now()}`,
+                        package: pack,
+                        duration_days,
+                        quantity: 1,
+                        addedAt: new Date().toISOString(),
+                    },
+                ]
             })
             if (notify) notify(`"${pack.name}" berhasil masuk ke keranjang 🛒`)
         },
@@ -85,8 +96,8 @@ export function useCartAndFavorites(notify) {
     }, [])
 
     const removeFromCart = useCallback(
-        (packId) => {
-            setCart((prev) => prev.filter((item) => item.package.id !== packId))
+        (cartItemId) => {
+            setCart((prev) => prev.filter((item) => item.id !== cartItemId))
             if (notify) notify('Item dihapus dari keranjang')
         },
         [notify],

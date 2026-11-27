@@ -110,7 +110,7 @@ export default function App() {
                 }
             }
         } catch (err) {
-            notify(`Gagal: ${err.message}`)
+            notify(`Gagal: ${err?.message || 'Terjadi kesalahan'}`)
         }
     }
 
