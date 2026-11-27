@@ -29,7 +29,7 @@ function loadLocalOrders() {
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(remote))
                     }
                 } catch (err) {
-                    console.warn('Gagal memuat pesanan dari server/Supabase:', err?.message)
+                    console.warn('Gagal memuat pesanan dari server API:', err?.message)
                     // Tetap gunakan data cache lokal
                 } finally {
                     setLoading(false)
@@ -76,7 +76,7 @@ function loadLocalOrders() {
                 return next
             })
 
-            // Kirim ke database Supabase via orderService
+            // Kirim ke server API Express via orderService
             try {
                 const remote = await orderService.createOrder(newOrder)
                 if (remote && remote.id) {
@@ -88,7 +88,7 @@ function loadLocalOrders() {
                     return remote
                 }
             } catch (err) {
-                console.error('Gagal mengirim pesanan ke database Supabase:', err)
+                console.error('Gagal mengirim pesanan ke server API:', err)
             }
 
             return newOrder
@@ -107,7 +107,7 @@ function loadLocalOrders() {
             try {
             await orderService.updateOrder(id, data, deviceId)
         } catch (err) {
-            console.error('Gagal update pesanan di Supabase:', err)
+            console.error('Gagal update pesanan di server API:', err)
         }
 },
 [deviceId],
@@ -124,7 +124,7 @@ const payOrder = useCallback(
         try {
             await orderService.payOrder(id, deviceId)
     } catch (err) {
-        console.error('Gagal verifikasi bayar di Supabase:', err)
+        console.error('Gagal verifikasi bayar di server API:', err)
     }
         },
 [deviceId],
@@ -141,7 +141,7 @@ const deleteOrder = useCallback(
         try {
             await orderService.deleteOrder(id, deviceId)
     } catch (err) {
-        console.error('Gagal hapus pesanan di Supabase:', err)
+        console.error('Gagal hapus pesanan di server API:', err)
     }
         },
 [deviceId],

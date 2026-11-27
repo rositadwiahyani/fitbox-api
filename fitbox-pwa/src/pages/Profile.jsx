@@ -110,6 +110,18 @@ export default function Profile({
         notify('Anda telah keluar dari akun')
     }
 
+    // Komponen Tentang Aplikasi (ditampilkan baik sebelum maupun sesudah login)
+    const aboutSection = (
+        <section className="border-2 border-dashed border-line p-5 rounded-xs space-y-3">
+            <h2 className="text-xl font-display">Tentang Aplikasi</h2>
+            <p className="text-sm text-ink/80 leading-relaxed">
+                FitBox adalah aplikasi pemesanan catering diet dan makanan sehat. Pengguna dapat menghitung
+                kebutuhan kalori harian, memilih paket menu sesuai tujuan, lalu berlangganan sesuai durasi
+                yang diinginkan.
+            </p>
+        </section>
+    )
+
     // Komponen Kartu Menu Favorit
     const favoritesSection = (
         <section
@@ -381,6 +393,9 @@ export default function Profile({
                         </button>
                     </form>
                 )}
+
+                {/* Tentang FitBox */}
+                {aboutSection}
             </div>
         )
     }
@@ -475,15 +490,8 @@ export default function Profile({
             {/* Menu Favorit Saya di Profil */}
             {favoritesSection}
 
-            {/* Tentang FitBox*/}
-            <section className="border-2 border-dashed border-line p-5 rounded-xs space-y-3">
-                <h2 className="text-xl font-display">Tentang Aplikasi</h2>
-                <p className="text-sm text-ink/80 leading-relaxed">
-                    FitBox adalah aplikasi pemesanan catering diet dan makanan sehat. Pengguna dapat menghitung
-                    kebutuhan kalori harian, memilih paket menu sesuai tujuan, lalu berlangganan sesuai durasi
-                    yang diinginkan.
-                </p>
-            </section>
+            {/* Tentang FitBox */}
+            {aboutSection}
         </div>
     )
 }
