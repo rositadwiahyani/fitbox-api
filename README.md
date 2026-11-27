@@ -1,35 +1,5 @@
 # 🥗 FitBox — Healthy & Diet Catering Subscription PWA
 
-<div align="center">
-
-![FitBox Banner](https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&h=400&q=80)
-
-<p align="center">
-  <strong>Solusi Langganan Katering Sehat, Diet & Kebugaran Harian Berbasis Progressive Web App (PWA).</strong><br>
-  <em>Menu bergizi presisi, dimasak segar setiap subuh, diantar tepat waktu, dan terintegrasi dengan kalkulator TDEE cerdas.</em>
-</p>
-
-[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5.3.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express_5-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](#️-lisensi--hak-cipta)
-
-[Fitur Utama](#-fitur-utama) •
-[Ekosistem & Arsitektur](#-ekosistem--arsitektur-teknologi) •
-[Struktur Direktori](#-struktur-direktori-proyek) •
-[Panduan Instalasi](#-panduan-instalasi--menjalankan-aplikasi) •
-[Dokumentasi REST API](#-dokumentasi-rest-api) •
-[Perhitungan Kalori](#-algoritma--logika-perhitungan-kalori) •
-[Fitur PWA](#-fitur-progressive-web-app-pwa) •
-[Deployment](#-panduan-deployment)
-
-</div>
-
----
-
 ## 📖 Tentang Aplikasi FitBox
 
 **FitBox** adalah platform langganan makanan diet dan katering sehat harian yang dirancang dengan pendekatan modern **Progressive Web App (PWA)** dan arsitektur decoupled (SPA Frontend + REST API Backend). 
