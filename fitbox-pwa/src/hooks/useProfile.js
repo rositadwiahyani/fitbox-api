@@ -4,6 +4,15 @@ import { uid } from '../utils'
 
 const PROFILE_KEY = 'fitbox:profile'
 const USER_KEY = 'fitbox:auth_user'
+const ADMIN_EMAIL = 'admin@gmail.com'
+const ADMIN_PASS = 'admin1234'
+
+function checkIsAdmin(userObj) {
+    return (
+        userObj?.role === 'admin' ||
+        userObj?.email?.trim().toLowerCase() === ADMIN_EMAIL
+    )
+}
 
 function loadSavedUser() {
     try {
@@ -170,9 +179,28 @@ export function useProfile() {
         [user],
     )
 
-    // Login dengan Supabase Auth
+    // Login dengan akun Admin atau Supabase Auth
     const login = useCallback(
         async (email, password) => {
+            const normalizedEmail = email.trim().toLowerCase()
+
+            if (normalizedEmail === ADMIN_EMAIL) {
+                if (password !== ADMIN_PASS) {
+                    return { success: false, error: 'Email atau password admin salah.' }
+                }
+                const adminUser = {
+                    id: 'admin-fitbox',
+                    email: ADMIN_EMAIL,
+                    name: 'Admin FitBox',
+                    phone: '081234567890',
+                    address: 'Dapur Pusat FitBox',
+                    role: 'admin',
+                }
+                setUser(adminUser)
+                localStorage.setItem(USER_KEY, JSON.stringify(adminUser))
+                return { success: true, user: adminUser }
+            }
+
             setLoading(true)
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({
@@ -204,8 +232,25 @@ export function useProfile() {
     // Register akun baru di Supabase Auth + Simpan ke tabel profiles
     const register = useCallback(
         async (formData) => {
-            if (!formData.email || !formData.password || !formData.name) {
+            const trimmedName = formData.name?.trim() || ''
+            const trimmedPhone = formData.phone?.trim() || ''
+
+            if (!formData.email || !formData.password || !trimmedName) {
                 return { success: false, error: 'Nama lengkap, email, dan password wajib diisi.' }
+            }
+            if (formData.email.trim().toLowerCase() === ADMIN_EMAIL) {
+                return { success: false, error: 'Email tersebut khusus untuk akun Admin.' }
+            }
+            if (!/^[a-zA-Z ]+$/.test(trimmedName)) {
+                return { success: false, error: 'Nama lengkap hanya boleh berisi huruf (tidak boleh angka atau karakter khusus).' }
+            }
+            if (!/^08\d{8,13}$/.test(trimmedPhone)) {
+                return {
+                    success: false,
+                    error: !trimmedPhone.startsWith('08')
+                        ? 'Nomor telepon harus diawali 08 (bukan +62 atau format lainnya).'
+                        : 'Nomor telepon harus terdiri dari 10–15 digit angka yang diawali 08.',
+                }
             }
             if (formData.password.length < 6) {
                 return { success: false, error: 'Password minimal 6 karakter.' }
@@ -287,6 +332,7 @@ export function useProfile() {
     return {
         user,
         isLoggedIn: !!user,
+        isAdmin: checkIsAdmin(user),
         profile,
         loading,
         saveProfile,

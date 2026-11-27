@@ -1,9 +1,25 @@
-import { Plus, ShieldAlert, LogIn } from 'lucide-react'
+import { Plus, ShieldAlert, LogIn, RefreshCw, User } from 'lucide-react'
 import { rupiah } from '../utils'
 
-export const statusClass = (s) => (s === 'menunggu' ? 'bg-amber-100 text-amber-800' : 'bg-sage text-ink')
+export const statusClass = (s) => {
+    if (s === 'menunggu') return 'bg-amber-100 text-amber-800'
+    if (s === 'dibatalkan') return 'bg-brick/15 text-brick'
+    if (s === 'selesai') return 'bg-leaf text-paper'
+    return 'bg-sage text-ink'
+}
 
-export default function Orders({ orders, loading, error, refetch, onOpen, onNewOrder, onNavigate, isLoggedIn, onOfflineAlert }) {
+export default function Orders({
+    orders,
+    loading,
+    error,
+    refetch,
+    onOpen,
+    onNewOrder,
+    onNavigate,
+    isLoggedIn,
+    isAdmin = false,
+    onOfflineAlert,
+}) {
     // Jika belum login, tampilkan prompt login
     if (!isLoggedIn) {
         return (
@@ -45,17 +61,31 @@ export default function Orders({ orders, loading, error, refetch, onOpen, onNewO
 
     return (
         <div className="space-y-6">
-            <div className="flex items-end justify-between gap-3 border-b border-line pb-3">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
                 <div>
-                    <p className="hand text-lg text-leaf">riwayat & pemesanan langganan</p>
-                    <h1 className="text-4xl">Pesanan Saya</h1>
+                    <p className="hand text-lg text-leaf">
+                        {isAdmin ? 'daftar pesanan dari user yang masuk' : 'riwayat & pemesanan langganan'}
+                    </p>
+                    <h1 className="text-4xl">{isAdmin ? 'Pesanan Masuk' : 'Pesanan Saya'}</h1>
                 </div>
-                <button
-                    onClick={handleNewOrder}
-                    className="btn btn-primary shadow-[2.5px_2.5px_0_var(--color-ink)]"
-                >
-                    <Plus size={18} /> Buat Pesanan Baru
-                </button>
+                {isAdmin ? (
+                    <button
+                        type="button"
+                        onClick={refetch}
+                        disabled={loading}
+                        className="btn btn-ghost border border-ink bg-flour shadow-[2.5px_2.5px_0_var(--color-ink)]"
+                    >
+                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                        {loading ? 'Memuat...' : 'Segarkan'}
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleNewOrder}
+                        className="btn btn-primary shadow-[2.5px_2.5px_0_var(--color-ink)]"
+                    >
+                        <Plus size={18} /> Buat Pesanan Baru
+                    </button>
+                )}
             </div>
 
             {error && (
@@ -71,18 +101,24 @@ export default function Orders({ orders, loading, error, refetch, onOpen, onNewO
                 <p className="py-14 text-center text-ink/60">Memuat pesanan...</p>
             ) : orders.length === 0 ? (
                 <div className="border-2 border-dashed border-line py-14 text-center" style={{ borderRadius: 4 }}>
-                    <p className="text-xl font-display text-ink">Belum ada pesanan aktif.</p>
-                    <p className="text-sm text-ink/60 mt-1 max-w-sm mx-auto">
-                        Mulai langganan catering sehat harianmu sekarang. Pilih menu favoritmu dengan takaran kalori pas!
+                    <p className="text-xl font-display text-ink">
+                        {isAdmin ? 'Belum ada pesanan masuk dari user.' : 'Belum ada pesanan aktif.'}
                     </p>
-                    <div className="mt-5 flex justify-center gap-3">
-                        <button onClick={handleNewOrder} className="btn btn-primary">
-                            <Plus size={18} /> Buat Pesanan Sekarang
-                        </button>
-                        <button onClick={() => onNavigate('packages')} className="btn btn-ghost">
-                            Lihat Menu Paket
-                        </button>
-                    </div>
+                    <p className="text-sm text-ink/60 mt-1 max-w-sm mx-auto">
+                        {isAdmin
+                            ? 'Pesanan yang dibuat oleh pengguna akan otomatis tampil di daftar ini.'
+                            : 'Mulai langganan catering sehat harianmu sekarang. Pilih menu favoritmu dengan takaran kalori pas!'}
+                    </p>
+                    {!isAdmin && (
+                        <div className="mt-5 flex justify-center gap-3">
+                            <button onClick={handleNewOrder} className="btn btn-primary">
+                                <Plus size={18} /> Buat Pesanan Sekarang
+                            </button>
+                            <button onClick={() => onNavigate('packages')} className="btn btn-ghost">
+                                Lihat Menu Paket
+                            </button>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -99,6 +135,13 @@ export default function Orders({ orders, loading, error, refetch, onOpen, onNewO
                                     {o.status}
                                 </span>
                             </div>
+                            {isAdmin && (
+                                <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-ink/80">
+                                    <User size={13} className="text-leaf" />
+                                    <span>{o.customer_name}</span>
+                                    <span className="text-ink/50">· {o.phone}</span>
+                                </p>
+                            )}
                             <p className="mt-1 text-sm text-ink/70">
                                 Mulai {o.start_date} · {o.duration_days} hari
                             </p>

@@ -4,16 +4,19 @@ import { statusClass } from './Orders'
 import { rupiah } from '../utils'
 import ConfirmModal from '../components/ConfirmModal'
 
-export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) {
+const ADMIN_STATUSES = ['menunggu', 'dibayar', 'diproses', 'dikirim', 'selesai', 'dibatalkan']
+
+export default function OrderDetail({ order, onBack, onPay, onDelete, onUpdateStatus, isAdmin = false, notify }) {
     const [confirmingCancel, setConfirmingCancel] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [updatingStatus, setUpdatingStatus] = useState(false)
 
     if (!order) {
         return (
             <div className="py-20 text-center space-y-4">
                 <p className="text-xl font-display text-ink">Pesanan tidak ditemukan atau telah dihapus.</p>
                 <button onClick={onBack} className="btn btn-primary">
-                    Kembali ke Pesanan Saya
+                    {isAdmin ? 'Kembali ke Pesanan Masuk' : 'Kembali ke Pesanan Saya'}
                 </button>
             </div>
         )
@@ -47,6 +50,19 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
     }
 
     const isPending = order.status === 'menunggu'
+
+    const handleAdminStatusChange = async (newStatus) => {
+        if (!onUpdateStatus || newStatus === order.status) return
+        setUpdatingStatus(true)
+        try {
+            await onUpdateStatus(order.id, newStatus)
+            if (notify) notify(`Status pesanan diperbarui menjadi "${newStatus}"`)
+        } catch (err) {
+            if (notify) notify(`Gagal: ${err?.message || 'Tidak dapat mengubah status pesanan'}`)
+        } finally {
+            setUpdatingStatus(false)
+        }
+    }
 
     return (
         <div className="fade-up mx-auto max-w-2xl space-y-6">
@@ -164,25 +180,56 @@ export default function OrderDetail({ order, onBack, onPay, onDelete, notify }) 
                     </div>
                 </div>
 
-                {/* Tombol Aksi: Bayar & Batalkan Pesanan (hanya saat status masih menunggu) */}
-                {isPending && (
-                    <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-4">
-                        <button
-                            type="button"
-                            onClick={handlePay}
-                            className="btn btn-primary flex-1 shadow-[2.5px_2.5px_0_var(--color-ink)]"
-                        >
-                            <CheckCircle2 size={18} /> Konfirmasi Pembayaran (Simulasi)
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setConfirmingCancel(true)}
-                            className="btn border border-brick bg-flour text-brick hover:bg-brick/10 text-sm shadow-[1.5px_1.5px_0_var(--color-brick)]"
-                        >
-                            <Trash2 size={16} /> Batalkan / Hapus Pesanan
-                        </button>
+                {/* Tombol Aksi: Admin (Ubah Status Pesanan) atau User (Bayar & Batalkan Pesanan) */}
+                {isAdmin ? (
+                    <div className="mt-6 space-y-3 border-t border-line pt-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">
+                                Ubah Status Pesanan (Admin)
+                            </span>
+                            <span className="hand text-xs text-leaf">perbarui progres pesanan user</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {ADMIN_STATUSES.map((st) => {
+                                const isCurrent = order.status === st
+                                return (
+                                    <button
+                                        key={st}
+                                        type="button"
+                                        disabled={updatingStatus || isCurrent}
+                                        onClick={() => handleAdminStatusChange(st)}
+                                        className={`rounded-xs border px-3 py-1.5 text-xs font-bold uppercase transition ${
+                                            isCurrent
+                                                ? 'border-ink bg-leaf text-paper shadow-[2px_2px_0_var(--color-ink)]'
+                                                : 'border-ink/40 bg-paper text-ink hover:border-ink hover:bg-sage/50'
+                                        }`}
+                                    >
+                                        {st}
+                                    </button>
+                                )
+                            })}
+                        </div>
                     </div>
+                ) : (
+                    isPending && (
+                        <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+                            <button
+                                type="button"
+                                onClick={handlePay}
+                                className="btn btn-primary flex-1 shadow-[2.5px_2.5px_0_var(--color-ink)]"
+                            >
+                                <CheckCircle2 size={18} /> Konfirmasi Pembayaran (Simulasi)
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setConfirmingCancel(true)}
+                                className="btn border border-brick bg-flour text-brick hover:bg-brick/10 text-sm shadow-[1.5px_1.5px_0_var(--color-brick)]"
+                            >
+                                <Trash2 size={16} /> Batalkan / Hapus Pesanan
+                            </button>
+                        </div>
+                    )
                 )}
             </div>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Heart, ShoppingBag, Flame } from 'lucide-react'
+import { Heart, ShoppingBag, Flame, Pencil, Trash2 } from 'lucide-react'
 import { GOALS } from '../data/seed'
 import { rupiah } from '../utils'
 
@@ -12,6 +12,9 @@ export default function PackageCard({
     onAddToCart,
     onToggleFavorite,
     isFavorite = false,
+    isAdmin = false,
+    onEdit,
+    onDelete,
 }) {
     const [imgError, setImgError] = useState(false)
     const imageUrl = pack.image_url || DEFAULT_FOOD_IMAGE
@@ -93,41 +96,68 @@ export default function PackageCard({
                     <span className="hand text-xs text-leaf font-bold">Menu subuh segar</span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {/* Fitur Favorit */}
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onToggleFavorite?.(pack)
-                        }}
-                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold border-1.5 border-ink rounded-xs transition active:translate-y-0.5 ${
-                            isFavorite
-                                ? 'bg-brick/15 text-brick border-brick shadow-[1.5px_1.5px_0_var(--color-brick)]'
-                                : 'bg-flour text-ink/75 hover:bg-sage/40 hover:text-ink shadow-[1.5px_1.5px_0_var(--color-ink)]'
-                        }`}
-                        title={isFavorite ? 'Hapus dari favorit' : 'Tambah ke favorit'}
-                        aria-label="Favorit"
-                    >
-                        <Heart
-                            size={16}
-                            className={isFavorite ? 'fill-brick text-brick' : 'text-ink/65'}
-                        />
-                        <span>{isFavorite ? 'Favorit' : 'Favorit'}</span>
-                    </button>
+                {isAdmin ? (
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onEdit?.(pack)
+                            }}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xs border-1.5 border-ink bg-flour px-3 py-1.5 text-xs font-bold text-ink shadow-[1.5px_1.5px_0_var(--color-ink)] transition hover:bg-sage/40 active:translate-y-0.5"
+                            title="Edit paket makanan"
+                        >
+                            <Pencil size={14} /> Edit
+                        </button>
 
-                    {/* Fitur Keranjang */}
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onAddToCart?.(pack)
-                        }}
-                        className="btn btn-primary !px-3 !py-1.5 text-xs flex-1 justify-center gap-1.5 shadow-[2px_2px_0_var(--color-ink)] active:shadow-none"
-                    >
-                        <ShoppingBag size={15} /> + Keranjang
-                    </button>
-                </div>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onDelete?.(pack)
+                            }}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xs border-1.5 border-brick bg-brick/10 px-3 py-1.5 text-xs font-bold text-brick shadow-[1.5px_1.5px_0_var(--color-brick)] transition hover:bg-brick hover:text-white active:translate-y-0.5"
+                            title="Hapus paket makanan"
+                        >
+                            <Trash2 size={14} /> Hapus
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        {/* Fitur Favorit */}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onToggleFavorite?.(pack)
+                            }}
+                            className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold border-1.5 border-ink rounded-xs transition active:translate-y-0.5 ${isFavorite
+                                    ? 'bg-brick/15 text-brick border-brick shadow-[1.5px_1.5px_0_var(--color-brick)]'
+                                    : 'bg-flour text-ink/75 hover:bg-sage/40 hover:text-ink shadow-[1.5px_1.5px_0_var(--color-ink)]'
+                                }`}
+                            title={isFavorite ? 'Hapus dari favorit' : 'Tambah ke favorit'}
+                            aria-label="Favorit"
+                        >
+                            <Heart
+                                size={16}
+                                className={isFavorite ? 'fill-brick text-brick' : 'text-ink/65'}
+                            />
+                            <span>{isFavorite ? 'Favorit' : 'Favorit'}</span>
+                        </button>
+
+                        {/* Fitur Keranjang */}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onAddToCart?.(pack)
+                            }}
+                            className="btn btn-primary !px-3 !py-1.5 text-xs flex-1 justify-center gap-1.5 shadow-[2px_2px_0_var(--color-ink)] active:shadow-none"
+                        >
+                            <ShoppingBag size={15} /> + Keranjang
+                        </button>
+                    </div>
+                )}
             </div>
         </article>
     )

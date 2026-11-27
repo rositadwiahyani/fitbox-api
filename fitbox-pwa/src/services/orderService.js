@@ -2,9 +2,13 @@ import { apiClient } from '../config/api'
 
 // Service pemesanan FitBox melalui REST API Express (/orders)
 const orderService = {
-    // Ambil daftar pesanan berdasarkan user_id (jika login) atau device_id
-    getOrders: (deviceId, userId) => {
+    // Ambil daftar pesanan berdasarkan role admin, user_id (jika login), atau device_id
+    getOrders: (deviceId, userId, isAdmin = false) => {
         const params = {}
+        if (isAdmin) {
+            params.role = 'admin'
+            return apiClient.get('/orders', { params })
+        }
         if (userId) params.user_id = userId
         if (deviceId) params.device_id = deviceId
         return apiClient.get('/orders', { params })
@@ -36,6 +40,10 @@ const orderService = {
     // Perbarui data pesanan melalui API Express
     updateOrder: (id, payload, deviceId) =>
         apiClient.put(`/orders/${id}`, { ...payload, device_id: deviceId }),
+
+    // Perbarui status pesanan oleh Admin melalui API Express
+    updateOrderStatus: (id, status) =>
+        apiClient.put(`/orders/${id}`, { role: 'admin', status }),
 
     // Konfirmasi status pembayaran melalui API Express
     payOrder: (id, deviceId) =>

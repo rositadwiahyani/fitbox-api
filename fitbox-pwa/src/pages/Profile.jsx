@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { LogIn, UserPlus, LogOut, CheckCircle2, Mail, Lock, Eye, EyeOff, Heart, ShoppingBag, ArrowRight } from 'lucide-react'
+import { LogIn, UserPlus, LogOut, CheckCircle2, Mail, Lock, Eye, EyeOff, Heart, ShoppingBag, ArrowRight, ShieldCheck, Salad, ClipboardList } from 'lucide-react'
 import { rupiah } from '../utils'
 
 export default function Profile({
     profile,
     user,
     isLoggedIn,
+    isAdmin = false,
     onLogin,
     onRegister,
     onLogout,
@@ -35,6 +36,7 @@ export default function Profile({
         phone: profile?.phone || '081234567890',
         address: profile?.address || 'Jl. Sehat Bugar No. 10, Jakarta',
     })
+    const [regErrors, setRegErrors] = useState({ name: '', phone: '' })
 
     // State untuk Edit Profil saat sudah login
     const [f, setF] = useState({
@@ -81,9 +83,31 @@ export default function Profile({
 
     const handleRegister = async (e) => {
         e.preventDefault()
+
+        const trimmedName = regData.name.trim()
+        const trimmedPhone = regData.phone.trim()
+        const nextErrors = { name: '', phone: '' }
+
+        if (!trimmedName || !/^[a-zA-Z ]+$/.test(trimmedName)) {
+            nextErrors.name = 'Nama lengkap wajib diisi dan hanya boleh berisi huruf (tanpa angka atau karakter khusus).'
+        }
+
+        if (!trimmedPhone.startsWith('08')) {
+            nextErrors.phone = 'Nomor telepon hanya bisa menerima input yang diawali 08 (bukan +62 atau format lainnya).'
+        } else if (!/^08\d{8,13}$/.test(trimmedPhone)) {
+            nextErrors.phone = 'Nomor telepon harus terdiri dari 10–15 digit angka yang diawali 08.'
+        }
+
+        if (nextErrors.name || nextErrors.phone) {
+            setRegErrors(nextErrors)
+            notify(`Gagal: ${nextErrors.name || nextErrors.phone}`)
+            return
+        }
+
+        setRegErrors({ name: '', phone: '' })
         setIsSubmitting(true)
         try {
-            const res = await onRegister(regData)
+            const res = await onRegister({ ...regData, name: trimmedName, phone: trimmedPhone })
             if (res.success) {
                 setF({
                     name: res.user.name || '',
@@ -319,10 +343,25 @@ export default function Profile({
                             <input
                                 required
                                 placeholder="Contoh: Rian Pratama"
-                                className="input"
+                                className={`input ${regErrors.name ? '!border-brick' : ''}`}
                                 value={regData.name}
-                                onChange={(e) => setRegData({ ...regData, name: e.target.value })}
+                                onChange={(e) => {
+                                    const raw = e.target.value
+                                    const sanitized = raw.replace(/[^a-zA-Z ]/g, '')
+                                    setRegData({ ...regData, name: sanitized })
+                                    if (raw !== sanitized) {
+                                        setRegErrors((prev) => ({
+                                            ...prev,
+                                            name: 'Nama lengkap hanya boleh berisi huruf (tidak boleh angka atau karakter khusus).',
+                                        }))
+                                    } else {
+                                        setRegErrors((prev) => ({ ...prev, name: '' }))
+                                    }
+                                }}
                             />
+                            {regErrors.name && (
+                                <p className="mt-1 text-xs font-bold text-brick">{regErrors.name}</p>
+                            )}
                         </div>
 
                         <div>
@@ -365,11 +404,36 @@ export default function Profile({
                             <input
                                 required
                                 type="tel"
+                                inputMode="numeric"
+                                maxLength={15}
                                 placeholder="08xxxxxxxxxx"
-                                className="input"
+                                className={`input ${regErrors.phone ? '!border-brick' : ''}`}
                                 value={regData.phone}
-                                onChange={(e) => setRegData({ ...regData, phone: e.target.value })}
+                                onChange={(e) => {
+                                    const raw = e.target.value
+                                    const digits = raw.replace(/\D/g, '')
+                                    setRegData({ ...regData, phone: digits })
+                                    if (raw !== digits) {
+                                        setRegErrors((prev) => ({
+                                            ...prev,
+                                            phone: 'Nomor telepon hanya boleh angka dan harus diawali 08 (bukan +62 atau format lainnya).',
+                                        }))
+                                    } else if (
+                                        (digits.length === 1 && digits !== '0') ||
+                                        (digits.length >= 2 && !digits.startsWith('08'))
+                                    ) {
+                                        setRegErrors((prev) => ({
+                                            ...prev,
+                                            phone: 'Nomor telepon hanya bisa menerima input yang diawali 08 (bukan +62 atau lainnya).',
+                                        }))
+                                    } else {
+                                        setRegErrors((prev) => ({ ...prev, phone: '' }))
+                                    }
+                                }}
                             />
+                            {regErrors.phone && (
+                                <p className="mt-1 text-xs font-bold text-brick">{regErrors.phone}</p>
+                            )}
                         </div>
 
                         <div>
@@ -407,6 +471,91 @@ export default function Profile({
         .join('')
         .toUpperCase()
         .slice(0, 2)
+
+    if (isAdmin) {
+        return (
+            <div className="mx-auto max-w-xl space-y-8">
+                <section
+                    className="fade-up border-2 border-ink bg-flour shadow-[6px_6px_0_var(--color-sage)]"
+                    style={{ borderRadius: 4 }}
+                >
+                    <div className="flex items-center justify-between border-b-2 border-ink bg-leaf p-5 text-paper">
+                        <div className="flex items-center gap-4">
+                            <div className="font-display flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-paper bg-leaf-dark text-xl font-bold">
+                                {initials}
+                            </div>
+                            <div>
+                                <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-sage font-bold">
+                                    <ShieldCheck size={13} /> Administrator FitBox
+                                </span>
+                                <h1 className="font-display text-2xl leading-tight">{user.name}</h1>
+                                <p className="text-xs text-paper/80">{user.email}</p>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="btn border border-paper bg-leaf-dark text-xs text-paper hover:bg-brick hover:border-brick transition"
+                        >
+                            <LogOut size={14} /> Keluar
+                        </button>
+                    </div>
+
+                    <div className="space-y-4 p-5">
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold uppercase tracking-wider text-ink/60">
+                                Panel Kelola Menu Paket Makanan
+                            </p>
+                            <span className="hand text-xs text-leaf">mode admin aktif</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="border-2 border-ink bg-paper p-3.5 rounded-xs">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-ink/60 block">
+                                    Total Paket Menu
+                                </span>
+                                <span className="font-display text-2xl text-leaf">
+                                    {packages.length} Menu
+                                </span>
+                            </div>
+                            <div className="border-2 border-ink bg-paper p-3.5 rounded-xs">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-ink/60 block">
+                                    Hak Akses
+                                </span>
+                                <span className="font-display text-xl text-ink">
+                                    CRUD Paket
+                                </span>
+                            </div>
+                        </div>
+
+                        <p className="text-sm text-ink/75 leading-relaxed">
+                            Anda masuk sebagai Admin. Anda dapat mengelola menu pilihan paket makanan serta memantau daftar pesanan yang masuk dari user.
+                        </p>
+
+                        <div className="grid gap-2.5 sm:grid-cols-2">
+                            <button
+                                type="button"
+                                onClick={() => onNavigate('packages')}
+                                className="btn btn-primary w-full shadow-[2.5px_2.5px_0_var(--color-ink)]"
+                            >
+                                <Salad size={16} /> Kelola Paket Makanan
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onNavigate('orders')}
+                                className="btn border-1.5 border-ink bg-paper text-ink w-full shadow-[2.5px_2.5px_0_var(--color-ink)] hover:bg-sage/40"
+                            >
+                                <ClipboardList size={16} /> Pesanan Masuk
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                {aboutSection}
+            </div>
+        )
+    }
 
     return (
         <div className="mx-auto max-w-xl space-y-8">

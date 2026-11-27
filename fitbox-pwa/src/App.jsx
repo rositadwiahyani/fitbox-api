@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import SplashScreen from './components/SplashScreen'
 import StatusBar from './components/StatusBar'
 import Footer from './components/Footer'
 import OrderForm from './components/OrderForm'
+import PackageForm from './components/PackageForm'
+import ConfirmModal from './components/ConfirmModal'
 import CartModal from './components/CartModal'
 import OfflineAlertModal from './components/OfflineAlertModal'
 import Home from './pages/Home'
@@ -27,6 +29,8 @@ export default function App() {
     const [packageId, setPackageId] = useState(null)
     const [orderId, setOrderId] = useState(null)
     const [orderModal, setOrderModal] = useState(null) // { pack } untuk baru, { order } untuk ubah
+    const [packageModal, setPackageModal] = useState(null) // { pack? } untuk CRUD admin
+    const [deleteTarget, setDeleteTarget] = useState(null) // paket yang akan dihapus admin
     const [showCart, setShowCart] = useState(false)
     const [offlineAlert, setOfflineAlert] = useState(null)
     const [toast, setToast] = useState('')
@@ -39,10 +43,16 @@ export default function App() {
     const store = usePackages()
     const auth = useProfile()
     const { profile, saveProfile } = auth
-    const orderStore = useOrders(profile.deviceId, auth.user)
+    const orderStore = useOrders(profile.deviceId, auth.user, auth.isAdmin)
     const cartStore = useCartAndFavorites(notify)
     const online = useOnlineStatus()
     const { canInstall, install } = useInstallPrompt()
+
+    useEffect(() => {
+        if (auth.isAdmin && (page === 'home' || page === 'calc')) {
+            setPage('packages')
+        }
+    }, [auth.isAdmin, page])
 
     const go = (id) => {
         setPage(id)
@@ -68,10 +78,10 @@ export default function App() {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
                 navigator.vibrate([100, 50, 100])
             }
-        } catch {}
+        } catch { }
         try {
             window.alert(msg)
-        } catch {}
+        } catch { }
     }
 
     const isAppOnline = () => {
@@ -114,16 +124,67 @@ export default function App() {
         }
     }
 
+    // CREATE / UPDATE / DELETE paket makanan oleh Admin
+    const handleSavePackage = async (data) => {
+        try {
+            if (packageModal?.pack) {
+                await store.updatePackage(packageModal.pack.id, data)
+                notify(`Paket "${data.name}" berhasil diperbarui`)
+            } else {
+                await store.addPackage(data)
+                notify(`Paket "${data.name}" berhasil ditambahkan`)
+            }
+            setPackageModal(null)
+        } catch (err) {
+            if (err?.status == null) {
+                setPackageModal(null)
+                notify(
+                    packageModal?.pack
+                        ? `Paket "${data.name}" diperbarui secara lokal`
+                        : `Paket "${data.name}" ditambahkan secara lokal`,
+                )
+            } else {
+                notify(`Gagal: ${err?.message || 'Terjadi kesalahan saat menyimpan paket'}`)
+            }
+        }
+    }
+
+    const handleConfirmDeletePackage = async () => {
+        if (!deleteTarget) return
+        const target = deleteTarget
+        try {
+            await store.deletePackage(target.id)
+            notify(`Paket "${target.name}" berhasil dihapus`)
+        } catch (err) {
+            if (err?.status == null) {
+                notify(`Paket "${target.name}" dihapus secara lokal`)
+            } else {
+                notify(`Gagal menghapus: ${err?.message || 'Terjadi kesalahan'}`)
+            }
+        } finally {
+            setDeleteTarget(null)
+            if (page === 'package' && String(packageId) === String(target.id)) {
+                go('packages')
+            }
+        }
+    }
+
     const currentPackage = store.packages.find((p) => p.id === packageId) || store.packages[0]
 
     return (
         <div className="flex min-h-screen flex-col">
             {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
             <StatusBar online={online} canInstall={canInstall} onInstall={install} />
-            <Navbar page={page} onNavigate={go} />
+            <Navbar
+                page={page}
+                onNavigate={go}
+                cartCount={cartStore.cartCount}
+                onOpenCart={() => setShowCart(true)}
+                isAdmin={auth.isAdmin}
+            />
 
             <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-20 pt-8 md:px-6 md:pb-14">
-                {page === 'home' && (
+                {!auth.isAdmin && page === 'home' && (
                     <Home
                         packages={store.packages}
                         onNavigate={go}
@@ -141,8 +202,10 @@ export default function App() {
                         onAddToCart={cartStore.addToCart}
                         onToggleFavorite={cartStore.toggleFavorite}
                         isFavorite={cartStore.isFavorite}
-                        cartCount={cartStore.cartCount}
-                        onOpenCart={() => setShowCart(true)}
+                        isAdmin={auth.isAdmin}
+                        onAdd={() => setPackageModal({ pack: null })}
+                        onEdit={(pack) => setPackageModal({ pack })}
+                        onDelete={(pack) => setDeleteTarget(pack)}
                     />
                 )}
                 {page === 'package' && (
@@ -157,9 +220,12 @@ export default function App() {
                         onToggleFavorite={cartStore.toggleFavorite}
                         isFavorite={currentPackage ? cartStore.isFavorite(currentPackage.id) : false}
                         onOfflineAlert={triggerOfflineAlert}
+                        isAdmin={auth.isAdmin}
+                        onEdit={(pack) => setPackageModal({ pack })}
+                        onDelete={(pack) => setDeleteTarget(pack)}
                     />
                 )}
-                {page === 'calc' && <Calculator packages={store.packages} onOpen={openPackage} />}
+                {!auth.isAdmin && page === 'calc' && <Calculator packages={store.packages} onOpen={openPackage} />}
                 {page === 'orders' && (
                     <Orders
                         {...orderStore}
@@ -171,6 +237,7 @@ export default function App() {
                         }}
                         onNavigate={go}
                         isLoggedIn={auth.isLoggedIn}
+                        isAdmin={auth.isAdmin}
                         onOfflineAlert={triggerOfflineAlert}
                     />
                 )}
@@ -180,6 +247,8 @@ export default function App() {
                         onBack={() => go('orders')}
                         onPay={orderStore.payOrder}
                         onDelete={orderStore.deleteOrder}
+                        onUpdateStatus={orderStore.updateOrderStatus}
+                        isAdmin={auth.isAdmin}
                         onEdit={(order) => setOrderModal({ order })}
                         notify={notify}
                     />
@@ -189,6 +258,7 @@ export default function App() {
                         profile={profile}
                         user={auth.user}
                         isLoggedIn={auth.isLoggedIn}
+                        isAdmin={auth.isAdmin}
                         onLogin={auth.login}
                         onRegister={auth.register}
                         onLogout={auth.logout}
@@ -206,8 +276,8 @@ export default function App() {
 
             <Footer />
 
-            {/* Modal Keranjang Belanja */}
-            {showCart && (
+            {/* Modal Keranjang Belanja (Khusus User) */}
+            {!auth.isAdmin && showCart && (
                 <CartModal
                     cart={cartStore.cart}
                     onRemove={cartStore.removeFromCart}
@@ -234,6 +304,26 @@ export default function App() {
                     onSubmit={submitOrder}
                     onClose={() => setOrderModal(null)}
                     onOfflineAlert={triggerOfflineAlert}
+                />
+            )}
+
+            {/* Modal Form Tambah/Edit Paket Makanan (Admin) */}
+            {packageModal && (
+                <PackageForm
+                    initial={packageModal.pack}
+                    onSubmit={handleSavePackage}
+                    onClose={() => setPackageModal(null)}
+                />
+            )}
+
+            {/* Modal Konfirmasi Hapus Paket (Admin) */}
+            {deleteTarget && (
+                <ConfirmModal
+                    title="Hapus Paket Makanan?"
+                    message={`Yakin ingin menghapus "${deleteTarget.name}" dari daftar menu pilihan paket makanan?`}
+                    confirmLabel="Ya, Hapus"
+                    onConfirm={handleConfirmDeletePackage}
+                    onCancel={() => setDeleteTarget(null)}
                 />
             )}
 

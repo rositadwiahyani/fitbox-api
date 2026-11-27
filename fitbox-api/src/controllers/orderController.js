@@ -43,6 +43,9 @@ const checkForm = (b, days) => {
 export const OrderController = {
     async getAll(req, res) {
         try {
+            if (req.query.role === "admin" || req.query.all === "true") {
+                return res.json(await OrderModel.getAll());
+            }
             if (req.query.user_id) {
                 return res.json(await OrderModel.getByUser(req.query.user_id));
             }
@@ -143,6 +146,16 @@ export const OrderController = {
 
     async update(req, res) {
         try {
+            if (req.body?.role === "admin" && req.body?.status) {
+                const allowed = ["menunggu", "dibayar", "diproses", "dikirim", "selesai", "dibatalkan"];
+                if (!allowed.includes(req.body.status)) {
+                    return res.status(400).json({ error: "Status pesanan tidak valid" });
+                }
+                const order = await OrderModel.getById(req.params.id).catch(() => null);
+                if (!order) return res.status(404).json({ error: "Pesanan tidak ditemukan" });
+                return res.json(await OrderModel.update(order.id, { status: req.body.status }));
+            }
+
             const order = await findOwned(req, res);
             if (!order || locked(res, order)) return;
 

@@ -8,7 +8,7 @@ const byCalories = (list) => [...list].sort((a, b) => a.calories - b.calories)
 function loadLocal() {
     try {
         const cached = JSON.parse(localStorage.getItem(STORAGE_KEY))
-        if (Array.isArray(cached) && cached.length >= INITIAL_PACKAGES.length) {
+        if (Array.isArray(cached) && cached.length > 0) {
             // Hindari cache usang yang memuat data placeholder lama
             const hasLegacy = cached.some((p) => p.name === 'Lean 1200' || p.name === 'Slim 1500')
             const valid = cached.every((p) => p.image_url && p.image_url.trim() !== '')
@@ -31,15 +31,11 @@ export function usePackages() {
         try {
             let remote = await packageService.getPackages()
 
-            // Pastikan setiap katalog dari INITIAL_PACKAGES tersimpan ke dalam database packages
-            if (Array.isArray(remote)) {
-                const existingNames = new Set(remote.map((e) => e.name?.toLowerCase()))
-                const missing = INITIAL_PACKAGES.filter((p) => !existingNames.has(p.name?.toLowerCase()))
-                if (missing.length > 0) {
-                    const synced = await packageService.syncCatalogToDatabase(missing)
-                    if (Array.isArray(synced) && synced.length > 0) {
-                        remote = [...remote, ...synced]
-                    }
+            // Sinkronkan katalog awal hanya jika tabel database masih kosong
+            if (Array.isArray(remote) && remote.length === 0) {
+                const synced = await packageService.syncCatalogToDatabase(INITIAL_PACKAGES)
+                if (Array.isArray(synced) && synced.length > 0) {
+                    remote = synced
                 }
             }
 
@@ -89,8 +85,9 @@ export function usePackages() {
     const addPackage = useCallback(async (data) => {
         try {
             const created = await packageService.createPackage(data)
-            setPackages((prev) => byCalories([...prev, created]))
-            return created
+            const enriched = { ...data, ...created, emoji: data.emoji || '🥗' }
+            setPackages((prev) => byCalories([...prev, enriched]))
+            return enriched
         } catch (err) {
             const localNew = { ...data, id: Date.now() }
             setPackages((prev) => byCalories([...prev, localNew]))
@@ -101,8 +98,9 @@ export function usePackages() {
     const updatePackage = useCallback(async (id, data) => {
         try {
             const updated = await packageService.updatePackage(id, data)
-            setPackages((prev) => byCalories(prev.map((p) => (p.id === id ? updated : p))))
-            return updated
+            const enriched = { ...data, ...updated, emoji: data.emoji || '🥗' }
+            setPackages((prev) => byCalories(prev.map((p) => (p.id === id ? enriched : p))))
+            return enriched
         } catch (err) {
             setPackages((prev) => byCalories(prev.map((p) => (p.id === id ? { ...p, ...data } : p))))
             throw err

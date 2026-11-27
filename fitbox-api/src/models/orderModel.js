@@ -1,6 +1,14 @@
 import { supabase } from "../config/supabaseClient.js";
 
 export const OrderModel = {
+    async getAll() {
+        const { data, error } = await supabase
+            .from("orders")
+            .select("*")
+            .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data;
+    },
     async getByDevice(deviceId) {
         const { data, error } = await supabase
             .from("orders")

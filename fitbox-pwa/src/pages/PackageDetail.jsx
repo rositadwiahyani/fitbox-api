@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, ShoppingBag, Heart, Flame, ShieldCheck, Sparkles, Utensils, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, Heart, Flame, ShieldCheck, Sparkles, Utensils, CheckCircle2, Pencil, Trash2 } from 'lucide-react'
 import { GOALS } from '../data/seed'
 import { rupiah } from '../utils'
 
@@ -13,6 +13,9 @@ export default function PackageDetail({
     onToggleFavorite,
     isFavorite = false,
     onOfflineAlert,
+    isAdmin = false,
+    onEdit,
+    onDelete,
 }) {
     const [imgError, setImgError] = useState(false)
     const imageUrl = pack?.image_url || DEFAULT_FOOD_IMAGE
@@ -137,48 +140,68 @@ export default function PackageDetail({
                         </div>
                     </div>
 
-                    {/* Tombol Aksi: Keranjang, Favorit & Pesan Sekarang */}
-                    <div className="mt-6 flex flex-wrap items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => onAddToCart?.(pack)}
-                            className="btn btn-primary px-5 py-2.5 text-base flex-1 min-w-[150px] shadow-[3px_3px_0_var(--color-ink)]"
-                        >
-                            <ShoppingBag size={18} /> + Ke Keranjang
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => onToggleFavorite?.(pack)}
-                            className={`btn px-4 py-2.5 text-base border-1.5 border-ink transition ${
-                                isFavorite
-                                    ? 'bg-brick/15 text-brick border-brick shadow-[2px_2px_0_var(--color-brick)]'
-                                    : 'bg-flour text-ink shadow-[2px_2px_0_var(--color-ink)] hover:bg-sage/40'
-                            }`}
-                            title={isFavorite ? 'Hapus dari favorit' : 'Simpan favorit'}
-                        >
-                            <Heart size={18} className={isFavorite ? 'fill-brick text-brick' : 'text-ink/70'} />
-                            <span>{isFavorite ? 'Favorit' : 'Favorit'}</span>
-                        </button>
-
-                        {onOrder && (
+                    {/* Tombol Aksi: Admin (Edit & Hapus) atau User (Keranjang, Favorit & Pesan Sekarang) */}
+                    {isAdmin ? (
+                        <div className="mt-6 flex flex-wrap items-center gap-3">
                             <button
                                 type="button"
-                                onClick={() => {
-                                    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-                                        const msg = 'Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.'
-                                        if (onOfflineAlert) onOfflineAlert(msg)
-                                        else alert(msg)
-                                        return
-                                    }
-                                    onOrder(pack)
-                                }}
-                                className="btn border-1.5 border-ink bg-sage px-5 py-2.5 text-base text-ink font-bold shadow-[2px_2px_0_var(--color-ink)] hover:bg-sage/80"
+                                onClick={() => onEdit?.(pack)}
+                                className="btn btn-primary px-5 py-2.5 text-base flex-1 min-w-[150px] shadow-[3px_3px_0_var(--color-ink)]"
                             >
-                                Pesan Langganan
+                                <Pencil size={18} /> Edit Paket
                             </button>
-                        )}
-                    </div>
+
+                            <button
+                                type="button"
+                                onClick={() => onDelete?.(pack)}
+                                className="btn px-5 py-2.5 text-base border-1.5 border-brick bg-brick/10 text-brick shadow-[2px_2px_0_var(--color-brick)] hover:bg-brick hover:text-white transition"
+                            >
+                                <Trash2 size={18} /> Hapus Paket
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="mt-6 flex flex-wrap items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => onAddToCart?.(pack)}
+                                className="btn btn-primary px-5 py-2.5 text-base flex-1 min-w-[150px] shadow-[3px_3px_0_var(--color-ink)]"
+                            >
+                                <ShoppingBag size={18} /> + Ke Keranjang
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => onToggleFavorite?.(pack)}
+                                className={`btn px-4 py-2.5 text-base border-1.5 border-ink transition ${
+                                    isFavorite
+                                        ? 'bg-brick/15 text-brick border-brick shadow-[2px_2px_0_var(--color-brick)]'
+                                        : 'bg-flour text-ink shadow-[2px_2px_0_var(--color-ink)] hover:bg-sage/40'
+                                }`}
+                                title={isFavorite ? 'Hapus dari favorit' : 'Simpan favorit'}
+                            >
+                                <Heart size={18} className={isFavorite ? 'fill-brick text-brick' : 'text-ink/70'} />
+                                <span>{isFavorite ? 'Favorit' : 'Favorit'}</span>
+                            </button>
+
+                            {onOrder && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+                                            const msg = 'Tidak dapat melakukan pemesanan saat offline. Pastikan perangkat Anda tersambung ke internet.'
+                                            if (onOfflineAlert) onOfflineAlert(msg)
+                                            else alert(msg)
+                                            return
+                                        }
+                                        onOrder(pack)
+                                    }}
+                                    className="btn border-1.5 border-ink bg-sage px-5 py-2.5 text-base text-ink font-bold shadow-[2px_2px_0_var(--color-ink)] hover:bg-sage/80"
+                                >
+                                    Pesan Langganan
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 

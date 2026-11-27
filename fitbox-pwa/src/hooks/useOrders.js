@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import orderService from '../services/orderService'
+import { supabase } from '../config/supabaseClient'
 
 const STORAGE_KEY = 'fitbox:orders'
 
@@ -12,7 +13,7 @@ function loadLocalOrders() {
     }
 }
 
-export function useOrders(deviceId, user) {
+export function useOrders(deviceId, user, isAdmin = false) {
     const [orders, setOrders] = useState(loadLocalOrders)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -26,24 +27,36 @@ export function useOrders(deviceId, user) {
         setOrders(newList)
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(newList))
-        } catch {}
+        } catch { }
     }, [])
 
     const refetch = useCallback(async () => {
         setLoading(true)
         setError(null)
         try {
-            const remote = await orderService.getOrders(deviceId, userId)
+            const remote = await orderService.getOrders(deviceId, userId, isAdmin)
             if (Array.isArray(remote)) {
                 saveOrders(remote)
             }
         } catch (err) {
+            if (isAdmin) {
+                try {
+                    const { data, error: sbErr } = await supabase
+                        .from('orders')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                    if (!sbErr && Array.isArray(data)) {
+                        saveOrders(data)
+                        return
+                    }
+                } catch { }
+            }
             console.warn('Gagal memuat pesanan dari server API:', err?.message)
             // Tetap gunakan data cache lokal
         } finally {
             setLoading(false)
         }
-    }, [deviceId, userId, saveOrders])
+    }, [deviceId, userId, isAdmin, saveOrders])
 
     useEffect(() => {
         refetch()
@@ -147,5 +160,39 @@ export function useOrders(deviceId, user) {
         [deviceId, saveOrders],
     )
 
-    return { orders, loading, error, refetch, addOrder, updateOrder, payOrder, deleteOrder }
+    const updateOrderStatus = useCallback(
+        async (id, status) => {
+            const previousOrders = ordersRef.current
+            saveOrders(previousOrders.map((o) => (String(o.id) === String(id) ? { ...o, status } : o)))
+
+            try {
+                const remote = await orderService.updateOrderStatus(id, status)
+                if (remote && remote.id) {
+                    saveOrders(ordersRef.current.map((o) => (String(o.id) === String(id) ? remote : o)))
+                }
+                return remote
+            } catch (err) {
+                try {
+                    const { data, error: sbErr } = await supabase
+                        .from('orders')
+                        .update({ status })
+                        .eq('id', id)
+                        .select()
+                        .single()
+                    if (!sbErr && data) {
+                        saveOrders(ordersRef.current.map((o) => (String(o.id) === String(id) ? data : o)))
+                        return data
+                    }
+                } catch { }
+                if (err?.status != null) {
+                    saveOrders(previousOrders)
+                    throw err
+                }
+                return { id, status }
+            }
+        },
+        [saveOrders],
+    )
+
+    return { orders, loading, error, refetch, addOrder, updateOrder, payOrder, deleteOrder, updateOrderStatus }
 }
