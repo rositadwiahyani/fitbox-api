@@ -9,9 +9,10 @@ function loadLocal() {
     try {
         const cached = JSON.parse(localStorage.getItem(STORAGE_KEY))
         if (Array.isArray(cached) && cached.length >= INITIAL_PACKAGES.length) {
-            // Pastikan tidak ada data usang yang kehilangan image_url
+            // Hindari cache usang yang memuat data placeholder lama
+            const hasLegacy = cached.some((p) => p.name === 'Lean 1200' || p.name === 'Slim 1500')
             const valid = cached.every((p) => p.image_url && p.image_url.trim() !== '')
-            if (valid) return cached
+            if (valid && !hasLegacy) return cached
         }
         return INITIAL_PACKAGES
     } catch {
@@ -28,28 +29,41 @@ export function usePackages() {
         setLoading(true)
         setError(null)
         try {
-            const remote = await packageService.getPackages()
+            let remote = await packageService.getPackages()
+
+            // Pastikan setiap katalog dari INITIAL_PACKAGES tersimpan ke dalam database packages
+            if (Array.isArray(remote)) {
+                const existingNames = new Set(remote.map((e) => e.name?.toLowerCase()))
+                const missing = INITIAL_PACKAGES.filter((p) => !existingNames.has(p.name?.toLowerCase()))
+                if (missing.length > 0) {
+                    const synced = await packageService.syncCatalogToDatabase(missing)
+                    if (Array.isArray(synced) && synced.length > 0) {
+                        remote = [...remote, ...synced]
+                    }
+                }
+            }
+
             if (Array.isArray(remote) && remote.length > 0) {
-                // Perkaya data remote jika belum memiliki image_url dengan pencocokan nama atau fallback
+                // Perkaya data dari database dengan emoji untuk tampilan UI
                 const enriched = remote.map((item, idx) => {
                     const fallback = INITIAL_PACKAGES.find((p) => p.name.toLowerCase() === item.name?.toLowerCase()) || INITIAL_PACKAGES[idx % INITIAL_PACKAGES.length]
                     return {
                         ...fallback,
                         ...item,
-                        image_url: (item.image_url && item.image_url.trim() !== '') ? item.image_url : fallback.image_url,
-                        price_per_day: Number(item.price_per_day) || fallback.price_per_day,
-                        description: item.description || fallback.description,
-                        highlights: fallback.highlights,
-                        carbs: item.carbs || fallback.carbs,
-                        fats: item.fats || fallback.fats,
-                        fiber: item.fiber || fallback.fiber,
+                        emoji: item.emoji || fallback?.emoji || '🥗',
+                        image_url: (item.image_url && item.image_url.trim() !== '') ? item.image_url : fallback?.image_url,
+                        price_per_day: Number(item.price_per_day) || fallback?.price_per_day,
+                        description: item.description || fallback?.description,
+                        highlights: item.highlights || fallback?.highlights,
+                        carbs: item.carbs || fallback?.carbs,
+                        fats: item.fats || fallback?.fats,
+                        fiber: item.fiber || fallback?.fiber,
                     }
                 })
-                // Pastikan seluruh paket lengkap tetap ada
-                const existingNames = new Set(enriched.map((e) => e.name.toLowerCase()))
-                const missing = INITIAL_PACKAGES.filter((p) => !existingNames.has(p.name.toLowerCase()))
-                setPackages(byCalories([...enriched, ...missing]))
+                setPackages(byCalories(enriched))
             } else {
+                // Jika database belum terisi sama sekali, lakukan sinkronisasi katalog
+                packageService.syncCatalogToDatabase(INITIAL_PACKAGES)
                 setPackages(byCalories(INITIAL_PACKAGES))
             }
         } catch (err) {
@@ -78,9 +92,11 @@ export function usePackages() {
         try {
             const created = await packageService.createPackage(data)
             setPackages((prev) => byCalories([...prev, created]))
-        } catch {
+            return created
+        } catch (err) {
             const localNew = { ...data, id: Date.now() }
             setPackages((prev) => byCalories([...prev, localNew]))
+            throw err
         }
     }, [])
 
@@ -88,8 +104,10 @@ export function usePackages() {
         try {
             const updated = await packageService.updatePackage(id, data)
             setPackages((prev) => byCalories(prev.map((p) => (p.id === id ? updated : p))))
-        } catch {
+            return updated
+        } catch (err) {
             setPackages((prev) => byCalories(prev.map((p) => (p.id === id ? { ...p, ...data } : p))))
+            throw err
         }
     }, [])
 
@@ -97,8 +115,9 @@ export function usePackages() {
         try {
             await packageService.deletePackage(id)
             setPackages((prev) => prev.filter((p) => p.id !== id))
-        } catch {
+        } catch (err) {
             setPackages((prev) => prev.filter((p) => p.id !== id))
+            throw err
         }
     }, [])
 

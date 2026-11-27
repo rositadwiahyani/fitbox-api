@@ -7,10 +7,14 @@ const pick = (b) => ({
     goal: b.goal,
     calories: Number(b.calories),
     protein: Number(b.protein) || 0,
+    carbs: Number(b.carbs) || 0,
+    fats: Number(b.fats) || 0,
+    fiber: Number(b.fiber) || 0,
     price_per_day: Number(b.price_per_day),
+    image_url: b.image_url || "",
     description: b.description || "",
     menu_sample: b.menu_sample || "",
-    emoji: b.emoji || "🥗",
+    highlights: Array.isArray(b.highlights) ? b.highlights : (b.highlights ? [b.highlights] : []),
 });
 
 const invalid = (p) =>

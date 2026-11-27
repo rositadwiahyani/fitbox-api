@@ -50,7 +50,9 @@ const orderService = {
     // Simpan pesanan baru ke tabel 'orders' di Supabase
     createOrder: async (orderData) => {
         const payload = {
-            package_id: orderData.package_id ? Number(orderData.package_id) : 1,
+            package_id: (Number.isInteger(Number(orderData.package_id)) && Number(orderData.package_id) > 0)
+                ? Number(orderData.package_id)
+                : 1,
             package_name: orderData.package_name || 'Paket Menu Sehat FitBox',
             price_per_day: Number(orderData.price_per_day) || 45000,
             customer_name: orderData.customer_name,

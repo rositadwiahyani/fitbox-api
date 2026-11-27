@@ -59,10 +59,14 @@ export const OrderController = {
             const packageName = pack?.name || b.package_name || "Paket Menu Sehat";
             const pricePerDay = pack?.price_per_day || Number(b.price_per_day) || 45000;
 
+            const safePackageId = Number.isInteger(Number(b.package_id)) && Number(b.package_id) > 0
+                ? Number(b.package_id)
+                : 1;
+
             const order = await OrderModel.create({
                 device_id: b.device_id,
                 user_id: b.user_id || null,
-                package_id: pack?.id || b.package_id || 1,
+                package_id: safePackageId,
                 package_name: packageName,
                 price_per_day: pricePerDay,
                 customer_name: b.customer_name,
